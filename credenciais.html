@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LinkBit - Credenciais</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
         body {
             background: linear-gradient(135deg, #f0f4ff, #e6e9ff);
@@ -127,16 +128,17 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+            animation: pulse 2s infinite;
         }
 
         .photo-upload-btn:hover {
-            transform: translateY(-2px);
+            transform: scale(1.05);
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(135deg, #a777e3, #6e8efb);
         }
 
-        .photo-upload-btn::before {
-            content: '📷';
+        .photo-upload-btn i {
             font-size: 18px;
         }
 
@@ -192,6 +194,7 @@
             margin: 0 auto 20px;
             border: 3px solid #6e8efb;
             position: relative;
+            cursor: grab;
         }
 
         .photo-preview img {
@@ -201,6 +204,10 @@
             position: absolute;
             left: 0;
             top: 0;
+        }
+
+        .photo-preview:active {
+            cursor: grabbing;
         }
 
         .zoom-slider {
@@ -220,6 +227,13 @@
         .editor-buttons button {
             padding: 10px 20px;
             max-width: 150px;
+        }
+
+        /* Animação dinâmica */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
         }
 
         @media (max-width: 600px) {
@@ -260,7 +274,7 @@
         <form id="credentials-form">
             <input type="text" id="display-name" placeholder="Novo nome de usuário">
             <div class="photo-upload-container">
-                <label for="photo-upload" class="photo-upload-btn">Carregar Foto</label>
+                <label for="photo-upload" class="photo-upload-btn"><i class="fas fa-camera"></i> Carregar Foto</label>
                 <input type="file" id="photo-upload" accept="image/*">
             </div>
             <button type="submit">Salvar Alterações</button>
@@ -316,12 +330,14 @@
                 displayNameInput.value = name;
             }
 
-            // Configura para formulário
-            if (user.type === 'form') {
+            // Configura email e senha
+            if (user.type === 'form' || user.type === 'google') {
                 if (currentEmail) {
                     currentEmail.textContent = user.email || 'N/A';
                     emailSection.style.display = 'block';
                 }
+            }
+            if (user.type === 'form') {
                 if (password) {
                     password.textContent = user.password ? '******' : 'N/A';
                     password.dataset.value = user.password || '';
@@ -403,7 +419,6 @@
             isDragging = true;
             startX = e.clientX - offsetX;
             startY = e.clientY - offsetY;
-            photoPreview.style.cursor = 'grabbing';
         });
 
         photoPreview.addEventListener('mousemove', function (e) {
@@ -416,12 +431,10 @@
 
         photoPreview.addEventListener('mouseup', function () {
             isDragging = false;
-            photoPreview.style.cursor = 'grab';
         });
 
         photoPreview.addEventListener('mouseleave', function () {
             isDragging = false;
-            photoPreview.style.cursor = 'grab';
         });
 
         // Função para confirmar foto
