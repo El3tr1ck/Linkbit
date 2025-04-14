@@ -185,13 +185,16 @@
             return Math.floor(100000 + Math.random() * 900000).toString();
         }
 
-        // Login com Google
-        function handleCredentialResponse(response) {
-            const data = jwt_decode(response.credential);
-            localStorage.setItem("user", JSON.stringify({ name: data.name, email: data.email }));
-            window.location.href = "index(feed).html"; // Redireciona para o feed
-        }
-
+      // Login com Google
+function handleCredentialResponse(response) {
+    const data = jwt_decode(response.credential);
+    localStorage.setItem("user", JSON.stringify({ 
+        name: data.name, 
+        email: data.email, 
+        picture: data.picture // Adiciona a foto do Google
+    }));
+    window.location.href = "index(feed).html";
+}
         // Login por Formulário
         document.getElementById("login-form").addEventListener("submit", function (e) {
             e.preventDefault();
