@@ -118,24 +118,67 @@
             margin: 0 auto;
         }
 
+        /* Estilo do painel de conta logada */
+        .account-prompt {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+            z-index: 1000;
+        }
+
+        .account-prompt h2 {
+            color: #6e8efb;
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+
+        .account-prompt p {
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .account-prompt .buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .account-prompt button {
+            padding: 10px 20px;
+            max-width: 150px;
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
         @media (max-width: 400px) {
-            .login-container {
+            .login-container, .account-prompt {
                 padding: 20px;
             }
 
             h1 {
                 font-size: 28px;
             }
+
+            .account-prompt h2 {
+                font-size: 18px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="login-container">
+    <div class="login-container" id="login-container">
         <h1>LinkBit</h1>
         <p>Conecte-se com seus amigos!</p>
 
@@ -166,6 +209,16 @@
         <div class="login-option">
             <h3>Entrar como Convidado</h3>
             <button onclick="guestLogin()">Acessar como Convidado</button>
+        </div>
+    </div>
+
+    <!-- Painel para conta logada -->
+    <div class="account-prompt" id="account-prompt" style="display: none;">
+        <h2>Já está logado!</h2>
+        <p>Quer logar em outra conta ou continuar com <span id="current-user">Amigo</span>?</p>
+        <div class="buttons">
+            <button onclick="switchAccount()">Sim, outra conta</button>
+            <button onclick="continueAccount()">Não, continuar</button>
         </div>
     </div>
 
@@ -285,6 +338,39 @@
             }).join(''));
             return JSON.parse(jsonPayload);
         }
+
+        // Função para verificar login e mostrar painel
+        function checkLoginStatus() {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const loginContainer = document.getElementById('login-container');
+            const accountPrompt = document.getElementById('account-prompt');
+            const currentUser = document.getElementById('current-user');
+
+            if (user && user.name) {
+                loginContainer.style.display = 'none';
+                accountPrompt.style.display = 'block';
+                currentUser.textContent = user.name;
+            } else {
+                loginContainer.style.display = 'block';
+                accountPrompt.style.display = 'none';
+            }
+        }
+
+        // Função para trocar de conta
+        function switchAccount() {
+            localStorage.removeItem('user');
+            localStorage.removeItem('display');
+            localStorage.removeItem('codeData');
+            window.location.reload();
+        }
+
+        // Função para continuar com a conta atual
+        function continueAccount() {
+            window.location.href = 'index(feed).html';
+        }
+
+        // Executa ao carregar
+        document.addEventListener('DOMContentLoaded', checkLoginStatus);
     </script>
 </body>
 </html>
