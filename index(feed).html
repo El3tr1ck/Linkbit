@@ -1,321 +1,377 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LinkBit - Feed</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Arial', sans-serif;
-        }
-
-        body {
-            background: linear-gradient(135deg, #f0f4ff, #e6e9ff);
-            min-height: 100vh;
-            display: flex;
-            overscroll-behavior: none;
-        }
-
-        .container {
-            display: flex;
-            width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .main-content {
-            flex: 1;
-            padding: 20px;
-        }
-
-        .feed {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .feed-placeholder {
-            color: #666;
-            font-size: 16px;
-            text-align: center;
-        }
-
-        .iframe-container {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            display: none;
-            z-index: 1000;
-        }
-
-        .iframe-container iframe {
-            border: none;
-            width: 450px;
-            height: 600px;
-            border-radius: 15px;
-        }
-
-        /* Barra lateral */
-        .sidebar {
-            width: 200px;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 20px;
-            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            position: fixed;
-            right: 0;
-            top: 0;
-            height: 100vh;
-            z-index: 500;
-        }
-
-        .profile-section {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .profile-picture {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid #6e8efb;
-            display: none;
-        }
-
-        .avatar-placeholder {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            border: 2px solid #6e8efb;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            color: white;
-            text-transform: uppercase;
-        }
-
-        .profile-name {
-            font-size: 16px;
-            color: #333;
-            font-weight: 600;
-            text-align: center;
-        }
-
-        .sidebar button {
-            padding: 12px 20px;
-            background: linear-gradient(135deg, #6e8efb, #a777e3);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .sidebar button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-        }
-
-        .sidebar button i {
-            font-size: 16px;
-        }
-
-        .sidebar button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-
-        @media (max-width: 800px) {
-            .container {
-                flex-direction: column;
-            }
-
-            .sidebar {
-                width: 70px;
-                padding: 10px;
-                align-items: center;
-            }
-
-            .profile-name {
-                font-size: 12px;
-                max-width: 60px;
-                word-wrap: break-word;
-            }
-
-            .profile-picture, .avatar-placeholder {
-                width: 40px;
-                height: 40px;
-                font-size: 16px;
-            }
-
-            .sidebar button {
-                padding: 10px;
-                justify-content: center;
-            }
-
-            .sidebar button span {
-                display: none;
-            }
-
-            .sidebar button i {
-                font-size: 20px;
-            }
-
-            .main-content {
-                padding: 15px;
-                margin-right: 70px;
-            }
-
-            .iframe-container iframe {
-                width: 100%;
-                max-width: 350px;
-                height: 500px;
-            }
-        }
-
-        @media (max-width: 600px) {
-            .main-content {
-                padding: 10px;
-                margin-right: 60px;
-            }
-
-            .sidebar {
-                width: 60px;
-                padding: 8px;
-            }
-
-            .feed {
-                padding: 15px;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LinkBit - Feed</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+    body {
+      display: flex;
+      min-height: 100vh;
+      background: #f5f5f5;
+    }
+    .sidebar {
+      width: 250px;
+      background: #fff;
+      padding: 20px;
+      position: fixed;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      border-left: 1px solid #ddd;
+    }
+    .sidebar button {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      background: #1DA1F2;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .sidebar button:hover {
+      background: #1991db;
+    }
+    .profile {
+      background: #fff;
+      padding: 20px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 250px;
+      border-bottom: 1px solid #ddd;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .profile img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+    }
+    .feed {
+      margin: 80px 20px 20px 20px;
+      max-width: 600px;
+      width: 100%;
+      margin-left: auto;
+      margin-right: 270px;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      width: 500px;
+      max-width: 90%;
+    }
+    .modal-content h2 {
+      margin-bottom: 15px;
+    }
+    .modal-content input,
+    .modal-content textarea {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    .modal-content textarea {
+      height: 100px;
+      resize: none;
+    }
+    .media-buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .media-buttons button {
+      padding: 8px;
+      background: #f0f0f0;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .media-options {
+      display: none;
+      margin-bottom: 10px;
+    }
+    .media-options input {
+      margin-top: 5px;
+    }
+    .modal-content .submit-btn {
+      background: #1DA1F2;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .mention {
+      color: #1DA1F2;
+      text-decoration: none;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="main-content">
-            <div class="feed">
-                <p class="feed-placeholder">Aqui aparecerão seus posts em breve!</p>
-            </div>
-        </div>
-        <div class="sidebar">
-            <div class="profile-section">
-                <img id="profile-picture" class="profile-picture">
-                <div id="avatar-placeholder" class="avatar-placeholder"></div>
-                <span id="profile-name" class="profile-name">Nome Atual</span>
-            </div>
-            <button onclick="logout()">
-                <i class="fas fa-sign-out-alt"></i>
-                <span>Sair</span>
-            </button>
-            <button disabled>
-                <i class="fas fa-server"></i>
-                <span>Canal</span>
-            </button>
-            <button onclick="goToCredentials()">
-                <i class="fas fa-id-card"></i>
-                <span>Credenciais</span>
-            </button>
-            <button onclick="goToProfile()">
-                <i class="fas fa-user"></i>
-                <span>Perfil</span>
-            </button>
-        </div>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <button onclick="openPostModal()">
+      <i class="fas fa-plus"></i> Criar Postagem
+    </button>
+    <!-- Outros itens da sidebar -->
+  </div>
+
+  <!-- Perfil -->
+  <div class="profile">
+    <img src="https://via.placeholder.com/40" alt="Foto de Perfil">
+    <span>Seu Nome</span>
+  </div>
+
+  <!-- Feed -->
+  <div class="feed">
+    <p>Aqui aparecerão seus posts em breve!</p>
+  </div>
+
+  <!-- Modal de Criação de Post -->
+  <div id="postModal" class="modal">
+    <div class="modal-content">
+      <h2>Criar Postagem</h2>
+      <input id="postTitle" placeholder="Título (opcional)" maxlength="100">
+      <textarea id="postText" placeholder="No que você está pensando?" maxlength="280"></textarea>
+      <div id="textPreview"></div>
+      <div class="media-buttons">
+        <button onclick="toggleMediaOptions('image')"><i class="fas fa-image"></i></button>
+        <button onclick="toggleMediaOptions('video')"><i class="fas fa-video"></i></button>
+      </div>
+      <div id="mediaOptions" class="media-options">
+        <button onclick="selectMedia('upload')">Upload</button>
+        <button onclick="selectMedia('url')">URL</button>
+        <input type="file" id="mediaUpload" style="display: none;" accept="image/*,video/*,image/gif">
+        <input type="text" id="mediaUrl" placeholder="Cole a URL da imagem ou vídeo" style="display: none;">
+      </div>
+      <button class="submit-btn" onclick="submitPost()">Enviar</button>
     </div>
-    <div class="iframe-container" id="iframe-container">
-        <iframe src="/credenciais"></iframe>
-    </div>
+  </div>
 
-    <script>
-        // Função para gerar cor de avatar
-        function getAvatarColor(name) {
-            const colors = ['#6e8efb', '#a777e3', '#ff6b6b', '#4CAF50', '#FF9800', '#9C27B0'];
-            let hash = 0;
-            for (let i = 0; i < name.length; i++) {
-                hash = name.charCodeAt(i) + ((hash << 5) - hash);
-            }
-            return colors[Math.abs(hash) % colors.length];
+  <script type="module">
+    // Import Firebase SDKs
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-analytics.js";
+    import { getFirestore, collection, addDoc, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-storage.js";
+    import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyA5m65LSJQDKFTdbl_iB71URRIhXWYhUcQ",
+      authDomain: "chat-alpha-e-beta.firebaseapp.com",
+      projectId: "chat-alpha-e-beta",
+      storageBucket: "chat-alpha-e-beta.firebasestorage.app",
+      messagingSenderId: "873372870268",
+      appId: "1:873372870268:web:74a0711b5f3840dc350bf9",
+      measurementId: "G-8HXRW3F6Q8"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+    const auth = getAuth(app);
+
+    // Função para criar um post
+    async function createPost(title, text, media = null) {
+      try {
+        let user = auth.currentUser;
+        let localUser = JSON.parse(localStorage.getItem('user') || '{}');
+
+        // Autenticar como anônimo se necessário
+        if (!user && (!localUser || !localUser.name)) {
+          await signInAnonymously(auth);
+          user = auth.currentUser;
+          localUser = { name: 'Convidado', type: 'guest' };
+          localStorage.setItem('user', JSON.stringify(localUser));
         }
 
-        // Função para carregar informações do usuário
-        function loadUserInfo() {
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            const display = JSON.parse(localStorage.getItem('display') || '{}');
-            const profileName = document.getElementById('profile-name');
-            const profilePicture = document.getElementById('profile-picture');
-            const avatarPlaceholder = document.getElementById('avatar-placeholder');
+        const post = {
+          title: title ? title.substring(0, 100) : '',
+          text: text.substring(0, 280),
+          media: media || {},
+          author: localUser.name || user?.displayName || 'Convidado',
+          createdAt: Timestamp.now(),
+          likes: []
+        };
 
-            const name = display.name || user.name || 'Amigo';
-            profileName.textContent = name;
+        const docRef = await addDoc(collection(db, 'posts'), post);
+        console.log('Post criado com ID:', docRef.id);
+        return docRef.id;
+      } catch (error) {
+        console.error('Erro ao criar post:', error);
+        throw error;
+      }
+    }
 
-            if (display.picture) {
-                profilePicture.src = display.picture;
-                profilePicture.style.display = 'block';
-                avatarPlaceholder.style.display = 'none';
-            } else if (user.picture && user.type === 'google') {
-                profilePicture.src = user.picture;
-                profilePicture.style.display = 'block';
-                avatarPlaceholder.style.display = 'none';
-            } else {
-                profilePicture.style.display = 'none';
-                avatarPlaceholder.style.display = 'flex';
-                avatarPlaceholder.style.background = getAvatarColor(name);
-                avatarPlaceholder.textContent = name.charAt(0);
-            }
+    // Função para upload de mídia
+    async function uploadMedia(file, type) {
+      try {
+        const storageRef = ref(storage, `media/${Date.now()}_${file.name}`);
+        await uploadBytes(storageRef, file);
+        const url = await getDownloadURL(storageRef);
+        return { type, url, embed: '' };
+      } catch (error) {
+        console.error('Erro ao fazer upload:', error);
+        throw error;
+      }
+    }
 
-            // Verifica se precisa do iframe
-            if (user.type === 'form' && !display.name && !display.picture) {
-                document.getElementById('iframe-container').style.display = 'block';
-            }
+    // Função para processar URL de mídia
+    function processVideoUrl(url) {
+      try {
+        if (url.includes('youtube.com') || url.includes('youtu.be')) {
+          const videoId = url.match(/(?:v=|\/)([0-9A-Za-z_-]{11})/)?.[1];
+          if (videoId) {
+            return {
+              type: 'video',
+              url,
+              embed: `<iframe width="560" height="315" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen></iframe>`
+            };
+          }
+        } else if (url.includes('tiktok.com')) {
+          const videoId = url.match(/\/video\/(\d+)/)?.[1];
+          if (videoId) {
+            return {
+              type: 'video',
+              url,
+              embed: `<iframe width="325" height="575" src="https://www.tiktok.com/embed/v2/${videoId}" frameborder="0" allowfullscreen></iframe>`
+            };
+          }
         }
+        return { type: 'image', url, embed: '' };
+      } catch (error) {
+        console.error('Erro ao processar mídia:', error);
+        return null;
+      }
+    }
 
-        // Função de logout
-        function logout() {
-            localStorage.removeItem('user');
-            localStorage.removeItem('display');
-            localStorage.removeItem('codeData');
-            window.location.href = '/login'; // Atualizado de 'login.html'
+    // Verificar autenticação
+    onAuthStateChanged(auth, (user) => {
+      if (!user && !localStorage.getItem('user')) {
+        window.location.href = '/login';
+      }
+    });
+
+    // Funções do modal
+    function openPostModal() {
+      document.getElementById('postModal').style.display = 'flex';
+      document.getElementById('postTitle').value = '';
+      document.getElementById('postText').value = '';
+      document.getElementById('textPreview').innerHTML = '';
+      document.getElementById('mediaOptions').style.display = 'none';
+      document.getElementById('mediaUpload').style.display = 'none';
+      document.getElementById('mediaUrl').style.display = 'none';
+    }
+
+    function closePostModal() {
+      document.getElementById('postModal').style.display = 'none';
+    }
+
+    function toggleMediaOptions(type) {
+      const mediaOptions = document.getElementById('mediaOptions');
+      mediaOptions.style.display = mediaOptions.style.display === 'block' ? 'none' : 'block';
+      mediaOptions.dataset.type = type;
+    }
+
+    function selectMedia(method) {
+      const mediaOptions = document.getElementById('mediaOptions');
+      const uploadInput = document.getElementById('mediaUpload');
+      const urlInput = document.getElementById('mediaUrl');
+      if (method === 'upload') {
+        uploadInput.style.display = 'block';
+        urlInput.style.display = 'none';
+        uploadInput.click();
+      } else {
+        urlInput.style.display = 'block';
+        uploadInput.style.display = 'none';
+        urlInput.focus();
+      }
+    }
+
+    async function submitPost() {
+      const title = document.getElementById('postTitle').value;
+      const text = document.getElementById('postText').value;
+      const uploadInput = document.getElementById('mediaUpload');
+      const urlInput = document.getElementById('mediaUrl');
+
+      if (!text.trim()) {
+        alert('Escreva algo no post!');
+        return;
+      }
+
+      let media = null;
+      if (uploadInput.files[0]) {
+        const file = uploadInput.files[0];
+        const type = file.type.startsWith('video') ? 'video' : file.type === 'image/gif' ? 'gif' : 'image';
+        media = await uploadMedia(file, type);
+      } else if (urlInput.value.trim()) {
+        media = processVideoUrl(urlInput.value);
+        if (!media) {
+          alert('URL inválida!');
+          return;
         }
+      }
 
-        // Função para ir para credenciais
-        function goToCredentials() {
-            window.location.href = '/credenciais'; // Atualizado de 'credenciais.html'
-        }
+      try {
+        await createPost(title, text, media);
+        closePostModal();
+        alert('Post criado com sucesso!');
+      } catch (error) {
+        alert('Erro ao criar post: ' + error.message);
+      }
+    }
 
-        // Função para ir para perfil
-        function goToProfile() {
-            window.location.href = '/perfil'; // Atualizado de 'perfil_cliente.html'
-        }
+    // Detectar menções @usuário
+    document.getElementById('postText').addEventListener('input', function () {
+      const text = this.value;
+      const preview = document.getElementById('textPreview');
+      const words = text.split(/(\s+)/);
+      preview.innerHTML = words
+        .map(word => {
+          if (word.startsWith('@') && word.length > 1) {
+            return `<span class="mention">${word.substring(1)}</span>`;
+          }
+          return word;
+        })
+        .join('');
+    });
 
-        // Verifica autenticação
-        function checkAuth() {
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            if (!user || !user.name) {
-                window.location.href = '/login'; // Atualizado de 'login.html'
-            }
-            loadUserInfo();
-        }
-
-        document.addEventListener('DOMContentLoaded', checkAuth);
-    </script>
+    // Fechar modal ao clicar fora
+    document.getElementById('postModal').addEventListener('click', function (e) {
+      if (e.target === this) {
+        closePostModal();
+      }
+    });
+  </script>
 </body>
 </html>
