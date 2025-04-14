@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LinkBit - Login</title>
-    <!-- EmailJS -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <!-- Google Sign-In -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         * {
@@ -52,7 +50,7 @@
             margin-bottom: 30px;
             display: flex;
             flex-direction: column;
-            align-items: center; /* Centraliza conteúdo */
+            align-items: center;
         }
 
         .login-option h3 {
@@ -66,7 +64,7 @@
             flex-direction: column;
             gap: 15px;
             width: 100%;
-            max-width: 300px; /* Limita largura do formulário */
+            max-width: 300px;
         }
 
         input {
@@ -91,9 +89,9 @@
             font-size: 16px;
             cursor: pointer;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
-            width: 100%; /* Botão ocupa toda a largura do contêiner pai */
-            max-width: 200px; /* Limita largura do botão */
-            margin: 0 auto; /* Centraliza horizontalmente */
+            width: 100%;
+            max-width: 200px;
+            margin: 0 auto;
         }
 
         button:hover {
@@ -105,7 +103,7 @@
             margin-top: 20px;
             display: flex;
             gap: 10px;
-            justify-content: center; /* Centraliza campo e botão */
+            justify-content: center;
             width: 100%;
             max-width: 300px;
         }
@@ -113,19 +111,18 @@
         #error-message {
             font-size: 14px;
             margin-top: 10px;
+            color: red;
         }
 
         .g_id_signin {
             margin: 0 auto;
         }
 
-        /* Animações */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Responsividade */
         @media (max-width: 400px) {
             .login-container {
                 padding: 20px;
@@ -142,7 +139,6 @@
         <h1>LinkBit</h1>
         <p>Conecte-se com seus amigos!</p>
 
-        <!-- Login com Google -->
         <div class="login-option">
             <h3>Entrar com Google</h3>
             <div id="g_id_onload"
@@ -152,7 +148,6 @@
             <div class="g_id_signin" data-type="standard"></div>
         </div>
 
-        <!-- Login por Formulário -->
         <div class="login-option">
             <h3>Entrar com Email</h3>
             <form id="login-form">
@@ -161,15 +156,13 @@
                 <input type="password" id="password" placeholder="Senha" required>
                 <button type="submit">Enviar</button>
             </form>
-            <!-- Área para inserir código -->
             <div id="code-verification" style="display: none;">
                 <input type="text" id="code" placeholder="Código de verificação">
                 <button onclick="verifyCode()">Verificar</button>
             </div>
-            <p id="error-message" style="color: red; display: none;"></p>
+            <p id="error-message" style="display: none;"></p>
         </div>
 
-        <!-- Login por Sessão -->
         <div class="login-option">
             <h3>Entrar como Convidado</h3>
             <button onclick="guestLogin()">Acessar como Convidado</button>
@@ -177,89 +170,102 @@
     </div>
 
     <script>
-        // Inicializar EmailJS
         emailjs.init("Ua1Fx3PQbravSSQ21");
 
-        // Função para gerar código de verificação
         function generateCode() {
             return Math.floor(100000 + Math.random() * 900000).toString();
         }
 
-      // Login com Google
-function handleCredentialResponse(response) {
-    const data = jwt_decode(response.credential);
-    localStorage.setItem("user", JSON.stringify({ 
-        name: data.name, 
-        email: data.email, 
-        picture: data.picture // Adiciona a foto do Google
-    }));
-    window.location.href = "index(feed).html";
-}
-        // Login por Formulário
-        document.getElementById("login-form").addEventListener("submit", function (e) {
+        function handleCredentialResponse(response) {
+            const data = jwt_decode(response.credential);
+            const user = {
+                name: data.name,
+                email: data.email,
+                picture: data.picture,
+                type: 'google'
+            };
+            localStorage.setItem('user', JSON.stringify(user));
+            window.location.href = 'index(feed).html';
+        }
+
+        let storedCode = '';
+        let codeTimestamp = 0;
+        document.getElementById('login-form').addEventListener('submit', function (e) {
             e.preventDefault();
-            const name = document.getElementById("name").value;
-            const email = document.getElementById("email").value;
-            const password = document.getElementById("password").value;
-            const errorMessage = document.getElementById("error-message");
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorMessage = document.getElementById('error-message');
 
             if (!name || !email || !password) {
-                errorMessage.textContent = "Preencha todos os campos!";
-                errorMessage.style.display = "block";
+                errorMessage.textContent = 'Preencha todos os campos!';
+                errorMessage.style.display = 'block';
                 return;
             }
 
-            // Gerar código
-            const code = generateCode();
-            localStorage.setItem("verificationCode", code);
-            localStorage.setItem("pendingUser", JSON.stringify({ name, email, password }));
+            storedCode = generateCode();
+            codeTimestamp = Date.now();
+            localStorage.setItem('codeData', JSON.stringify({ code: storedCode, timestamp: codeTimestamp }));
 
-            // Enviar email com EmailJS
             const templateParams = {
-                subject: "Verificação LinkBit",
-                from_name: "LinkBit",
-                message: `Seu código de verificação é: <strong>${code}</strong>`,
+                subject: 'Verificação LinkBit',
+                from_name: 'LinkBit',
+                message: storedCode, // Apenas o código, template formata
                 to_email: email
             };
 
-            emailjs.send("service_yqadn6g", "template_h19nxad", templateParams)
+            emailjs.send('service_yqadn6g', 'template_h19nxad', templateParams)
                 .then(() => {
-                    document.getElementById("login-form").style.display = "none";
-                    document.getElementById("code-verification").style.display = "flex";
-                    errorMessage.style.display = "none";
+                    document.getElementById('login-form').style.display = 'none';
+                    document.getElementById('code-verification').style.display = 'flex';
+                    errorMessage.style.display = 'none';
                 })
-                .catch(() => {
-                    errorMessage.textContent = "Erro ao enviar email!";
-                    errorMessage.style.display = "block";
+                .catch((err) => {
+                    errorMessage.textContent = `Erro ao enviar email: ${err.text || 'Tente novamente!'}`;
+                    errorMessage.style.display = 'block';
                 });
         });
 
-        // Verificar código
         function verifyCode() {
-            const inputCode = document.getElementById("code").value;
-            const storedCode = localStorage.getItem("verificationCode");
-            const errorMessage = document.getElementById("error-message");
+            const inputCode = document.getElementById('code').value;
+            const errorMessage = document.getElementById('error-message');
+            const codeData = JSON.parse(localStorage.getItem('codeData') || '{}');
 
-            if (inputCode === storedCode) {
-                const user = JSON.parse(localStorage.getItem("pendingUser"));
-                localStorage.setItem("user", JSON.stringify(user));
-                localStorage.removeItem("verificationCode");
-                localStorage.removeItem("pendingUser");
-                window.location.href = "index(feed).html"; // Redireciona para o feed
+            // Verifica expiração (10 minutos = 600000 ms)
+            if (!codeData.timestamp || Date.now() - codeData.timestamp > 600000) {
+                errorMessage.textContent = 'Código expirado! Tente novamente.';
+                errorMessage.style.display = 'block';
+                document.getElementById('login-form').style.display = 'block';
+                document.getElementById('code-verification').style.display = 'none';
+                localStorage.removeItem('codeData');
+                return;
+            }
+
+            if (inputCode === codeData.code) {
+                const user = {
+                    name: document.getElementById('name').value,
+                    email: document.getElementById('email').value,
+                    type: 'form'
+                };
+                localStorage.setItem('user', JSON.stringify(user));
+                localStorage.removeItem('codeData');
+                window.location.href = 'index(feed).html';
             } else {
-                errorMessage.textContent = "Código inválido!";
-                errorMessage.style.display = "block";
+                errorMessage.textContent = 'Código inválido!';
+                errorMessage.style.display = 'block';
             }
         }
 
-        // Login como Convidado
         function guestLogin() {
-            const randomName = "Convidado_" + Math.floor(Math.random() * 10000);
-            localStorage.setItem("user", JSON.stringify({ name: randomName, email: null }));
-            window.location.href = "index(feed).html"; // Redireciona para o feed
+            const user = {
+                name: `Convidado_${Math.floor(Math.random() * 10000)}`,
+                email: null,
+                type: 'guest'
+            };
+            localStorage.setItem('user', JSON.stringify(user));
+            window.location.href = 'index(feed).html';
         }
 
-        // Função para decodificar JWT do Google
         function jwt_decode(token) {
             const base64Url = token.split('.')[1];
             const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
