@@ -13,30 +13,32 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            margin: 0;
         }
 
         .credentials-container {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            padding: 30px;
-            max-width: 400px;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+            padding: 40px;
+            max-width: 450px;
             width: 100%;
             text-align: center;
         }
 
         h1 {
             color: #6e8efb;
-            margin-bottom: 20px;
-            font-size: 24px;
+            margin-bottom: 25px;
+            font-size: 28px;
+            font-weight: 600;
         }
 
         .info-section {
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
 
         .info-section p {
-            margin: 10px 0;
+            margin: 12px 0;
             color: #333;
             font-size: 16px;
         }
@@ -64,6 +66,7 @@
             border-radius: 5px;
             cursor: pointer;
             font-size: 14px;
+            transition: background 0.3s ease;
         }
 
         .toggle-password:hover {
@@ -71,16 +74,16 @@
         }
 
         .current-picture {
-            width: 100px;
-            height: 100px;
+            width: 120px;
+            height: 120px;
             border-radius: 50%;
             object-fit: cover;
-            border: 3px solid #6e8efb;
-            margin-bottom: 10px;
+            border: 4px solid #6e8efb;
+            margin: 0 auto 15px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 40px;
+            font-size: 48px;
             color: white;
             text-transform: uppercase;
         }
@@ -88,15 +91,15 @@
         form {
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 20px;
         }
 
-        input[type="text"],
-        input[type="file"] {
-            padding: 10px;
+        input[type="text"] {
+            padding: 12px;
             border: 1px solid #ddd;
             border-radius: 8px;
             font-size: 16px;
+            transition: border-color 0.3s ease;
         }
 
         input[type="text"]:focus {
@@ -104,8 +107,41 @@
             outline: none;
         }
 
+        .photo-upload-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .photo-upload-btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .photo-upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .photo-upload-btn::before {
+            content: '📷';
+            font-size: 18px;
+        }
+
         button[type="submit"] {
-            padding: 10px;
+            padding: 12px;
             background: linear-gradient(135deg, #6e8efb, #a777e3);
             color: white;
             border: none;
@@ -125,13 +161,86 @@
             margin-top: 10px;
         }
 
+        /* Painel de edição de foto */
+        .photo-editor {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            z-index: 1000;
+            display: none;
+        }
+
+        .photo-editor h2 {
+            color: #6e8efb;
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+
+        .photo-preview {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            overflow: hidden;
+            margin: 0 auto 20px;
+            border: 3px solid #6e8efb;
+            position: relative;
+        }
+
+        .photo-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+
+        .zoom-slider {
+            margin-bottom: 20px;
+        }
+
+        .zoom-slider input {
+            width: 100%;
+        }
+
+        .editor-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .editor-buttons button {
+            padding: 10px 20px;
+            max-width: 150px;
+        }
+
         @media (max-width: 600px) {
-            .credentials-container {
-                padding: 20px;
+            .credentials-container, .photo-editor {
+                padding: 25px;
+                max-width: 90%;
             }
 
             h1 {
-                font-size: 20px;
+                font-size: 24px;
+            }
+
+            .current-picture {
+                width: 100px;
+                height: 100px;
+                font-size: 40px;
+            }
+
+            .photo-preview {
+                width: 150px;
+                height: 150px;
             }
         }
     </style>
@@ -140,7 +249,7 @@
     <div class="credentials-container">
         <h1>Suas Credenciais</h1>
         <div class="info-section">
-            <img id="current-picture" src="https://via.placeholder.com/100" alt="Foto Atual">
+            <div id="current-picture" class="current-picture"></div>
             <p><strong>Nome:</strong> <span id="current-name">Nome Atual</span></p>
             <p id="email-section" style="display: none;"><strong>Email:</strong> <span id="current-email">Email Atual</span></p>
             <div id="password-section" class="password-container" style="display: none;">
@@ -150,10 +259,29 @@
         </div>
         <form id="credentials-form">
             <input type="text" id="display-name" placeholder="Novo nome de usuário">
-            <input type="file" id="photo-upload" accept="image/*">
+            <div class="photo-upload-container">
+                <label for="photo-upload" class="photo-upload-btn">Carregar Foto</label>
+                <input type="file" id="photo-upload" accept="image/*">
+            </div>
             <button type="submit">Salvar Alterações</button>
         </form>
         <p id="error-message" style="display: none;"></p>
+    </div>
+
+    <!-- Painel de edição de foto -->
+    <div class="photo-editor" id="photo-editor">
+        <h2>Ajustar Foto de Perfil</h2>
+        <div class="photo-preview" id="photo-preview">
+            <img id="edit-image" src="" alt="Prévia">
+        </div>
+        <div class="zoom-slider">
+            <label for="zoom">Zoom:</label>
+            <input type="range" id="zoom" min="1" max="3" step="0.1" value="1">
+        </div>
+        <div class="editor-buttons">
+            <button onclick="confirmPhoto()">Confirmar</button>
+            <button onclick="cancelPhoto()">Cancelar</button>
+        </div>
     </div>
 
     <script>
@@ -230,33 +358,115 @@
             }
         }
 
+        // Variáveis para edição de foto
+        let photoData = null;
+        let offsetX = 0, offsetY = 0;
+        let zoom = 1;
+        let isDragging = false;
+        let startX, startY;
+
+        // Função para abrir painel de edição
+        document.getElementById('photo-upload').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    photoData = event.target.result;
+                    const editImage = document.getElementById('edit-image');
+                    const photoEditor = document.getElementById('photo-editor');
+                    editImage.src = photoData;
+                    zoom = 1;
+                    offsetX = 0;
+                    offsetY = 0;
+                    updateImagePosition();
+                    photoEditor.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Função para atualizar posição e zoom da imagem
+        function updateImagePosition() {
+            const editImage = document.getElementById('edit-image');
+            editImage.style.transform = `scale(${zoom}) translate(${offsetX}px, ${offsetY}px)`;
+        }
+
+        // Evento para zoom
+        document.getElementById('zoom').addEventListener('input', function (e) {
+            zoom = parseFloat(e.target.value);
+            updateImagePosition();
+        });
+
+        // Eventos para arrastar
+        const photoPreview = document.getElementById('photo-preview');
+        photoPreview.addEventListener('mousedown', function (e) {
+            isDragging = true;
+            startX = e.clientX - offsetX;
+            startY = e.clientY - offsetY;
+            photoPreview.style.cursor = 'grabbing';
+        });
+
+        photoPreview.addEventListener('mousemove', function (e) {
+            if (isDragging) {
+                offsetX = e.clientX - startX;
+                offsetY = e.clientY - startY;
+                updateImagePosition();
+            }
+        });
+
+        photoPreview.addEventListener('mouseup', function () {
+            isDragging = false;
+            photoPreview.style.cursor = 'grab';
+        });
+
+        photoPreview.addEventListener('mouseleave', function () {
+            isDragging = false;
+            photoPreview.style.cursor = 'grab';
+        });
+
+        // Função para confirmar foto
+        function confirmPhoto() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            img.src = photoData;
+            img.onload = function () {
+                canvas.width = 200;
+                canvas.height = 200;
+                ctx.beginPath();
+                ctx.arc(100, 100, 100, 0, Math.PI * 2);
+                ctx.clip();
+                const scale = zoom * (img.width / 200);
+                const drawX = (100 - (img.width / scale) / 2) + (offsetX / scale);
+                const drawY = (100 - (img.height / scale) / 2) + (offsetY / scale);
+                ctx.drawImage(img, drawX, drawY, img.width / scale, img.height / scale);
+                photoData = canvas.toDataURL('image/png');
+                document.getElementById('photo-editor').style.display = 'none';
+                saveDisplay(document.getElementById('display-name').value, photoData);
+            };
+        }
+
+        // Função para cancelar edição
+        function cancelPhoto() {
+            document.getElementById('photo-editor').style.display = 'none';
+            document.getElementById('photo-upload').value = '';
+            photoData = null;
+        }
+
         // Função para salvar alterações visuais
         document.getElementById('credentials-form').addEventListener('submit', function (e) {
             e.preventDefault();
             const user = JSON.parse(localStorage.getItem('user') || '{}');
             const displayName = document.getElementById('display-name').value;
-            const photoFile = document.getElementById('photo-upload').files[0];
             const errorMessage = document.getElementById('error-message');
 
-            // Valida nome para formulário
             if (user.type === 'form' && !displayName) {
                 errorMessage.textContent = 'O nome não pode ser vazio!';
                 errorMessage.style.display = 'block';
                 return;
             }
 
-            // Processa foto
-            let picture = JSON.parse(localStorage.getItem('display') || '{}').picture || user.picture;
-            if (photoFile) {
-                const reader = new FileReader();
-                reader.onload = function (event) {
-                    picture = event.target.result;
-                    saveDisplay(displayName, picture);
-                };
-                reader.readAsDataURL(photoFile);
-            } else {
-                saveDisplay(displayName, picture);
-            }
+            saveDisplay(displayName, JSON.parse(localStorage.getItem('display') || '{}').picture);
         });
 
         // Função para salvar display
