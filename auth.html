@@ -126,8 +126,9 @@
                     if (profileName) {
                         profileName.textContent = user.name || 'Usuário';
                     }
-                    if (profilePicture && user.picture) {
-                        profilePicture.src = user.picture; // Usa foto do Google, se disponível
+                    if (profilePicture) {
+                        // Usa a foto do Google se disponível, senão placeholder
+                        profilePicture.src = user.picture || 'https://via.placeholder.com/40';
                     }
                 }
             } else {
