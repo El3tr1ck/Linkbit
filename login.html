@@ -50,6 +50,9 @@
 
         .login-option {
             margin-bottom: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Centraliza conteúdo */
         }
 
         .login-option h3 {
@@ -62,6 +65,8 @@
             display: flex;
             flex-direction: column;
             gap: 15px;
+            width: 100%;
+            max-width: 300px; /* Limita largura do formulário */
         }
 
         input {
@@ -86,6 +91,9 @@
             font-size: 16px;
             cursor: pointer;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
+            width: 100%; /* Botão ocupa toda a largura do contêiner pai */
+            max-width: 200px; /* Limita largura do botão */
+            margin: 0 auto; /* Centraliza horizontalmente */
         }
 
         button:hover {
@@ -97,6 +105,9 @@
             margin-top: 20px;
             display: flex;
             gap: 10px;
+            justify-content: center; /* Centraliza campo e botão */
+            width: 100%;
+            max-width: 300px;
         }
 
         #error-message {
@@ -177,9 +188,8 @@
         // Login com Google
         function handleCredentialResponse(response) {
             const data = jwt_decode(response.credential);
-            console.log("Usuário Google:", data.name, data.email);
             localStorage.setItem("user", JSON.stringify({ name: data.name, email: data.email }));
-            alert("Login com Google bem-sucedido!"); // Substitua por redirecionamento
+            window.location.href = "index(feed).html"; // Redireciona para o feed
         }
 
         // Login por Formulário
@@ -232,7 +242,7 @@
                 localStorage.setItem("user", JSON.stringify(user));
                 localStorage.removeItem("verificationCode");
                 localStorage.removeItem("pendingUser");
-                alert("Login por email verificado!"); // Substitua por redirecionamento
+                window.location.href = "index(feed).html"; // Redireciona para o feed
             } else {
                 errorMessage.textContent = "Código inválido!";
                 errorMessage.style.display = "block";
@@ -243,7 +253,7 @@
         function guestLogin() {
             const randomName = "Convidado_" + Math.floor(Math.random() * 10000);
             localStorage.setItem("user", JSON.stringify({ name: randomName, email: null }));
-            alert("Login como convidado: " + randomName); // Substitua por redirecionamento
+            window.location.href = "index(feed).html"; // Redireciona para o feed
         }
 
         // Função para decodificar JWT do Google
