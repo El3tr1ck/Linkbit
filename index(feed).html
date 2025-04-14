@@ -231,6 +231,14 @@
                 <i class="fas fa-server"></i>
                 <span>Canal</span>
             </button>
+            <button onclick="goToCredentials()">
+                <i class="fas fa-id-card"></i>
+                <span>Credenciais</span>
+            </button>
+            <button onclick="goToProfile()">
+                <i class="fas fa-user"></i>
+                <span>Perfil</span>
+            </button>
         </div>
     </div>
     <div class="iframe-container" id="iframe-container">
@@ -286,6 +294,16 @@
             localStorage.removeItem('display');
             localStorage.removeItem('codeData');
             window.location.href = 'login.html';
+        }
+
+        // Função para ir para credenciais
+        function goToCredentials() {
+            window.location.href = 'credenciais.html';
+        }
+
+        // Função para ir para perfil
+        function goToProfile() {
+            window.location.href = 'perfil_cliente.html';
         }
 
         // Verifica autenticação
