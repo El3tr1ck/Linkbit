@@ -15,6 +15,7 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
+            overscroll-behavior: none;
         }
 
         .credentials-container {
@@ -79,6 +80,16 @@
             height: 120px;
             border-radius: 50%;
             object-fit: cover;
+            border: 4px solid #6e8efb;
+            margin: 0 auto 15px;
+            display: block;
+            background: none;
+        }
+
+        .avatar-placeholder {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
             border: 4px solid #6e8efb;
             margin: 0 auto 15px;
             display: flex;
@@ -172,9 +183,9 @@
             background: rgba(255, 255, 255, 0.98);
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            padding: 30px;
-            max-width: 500px;
-            width: 100%;
+            padding: 20px;
+            max-width: 90%;
+            width: 400px;
             text-align: center;
             z-index: 1000;
             display: none;
@@ -183,7 +194,7 @@
         .photo-editor h2 {
             color: #6e8efb;
             font-size: 20px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .photo-preview {
@@ -191,10 +202,10 @@
             height: 200px;
             border-radius: 50%;
             overflow: hidden;
-            margin: 0 auto 20px;
+            margin: 0 auto 15px;
             border: 3px solid #6e8efb;
             position: relative;
-            cursor: grab;
+            touch-action: none;
         }
 
         .photo-preview img {
@@ -204,18 +215,16 @@
             position: absolute;
             left: 0;
             top: 0;
-        }
-
-        .photo-preview:active {
-            cursor: grabbing;
+            pointer-events: none;
         }
 
         .zoom-slider {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .zoom-slider input {
             width: 100%;
+            cursor: pointer;
         }
 
         .editor-buttons {
@@ -227,9 +236,10 @@
         .editor-buttons button {
             padding: 10px 20px;
             max-width: 150px;
+            font-size: 14px;
         }
 
-        /* Animação dinâmica */
+        /* Animação */
         @keyframes pulse {
             0% { transform: scale(1); }
             50% { transform: scale(1.03); }
@@ -237,16 +247,21 @@
         }
 
         @media (max-width: 600px) {
-            .credentials-container, .photo-editor {
-                padding: 25px;
-                max-width: 90%;
+            .credentials-container {
+                padding: 20px;
+                max-width: 95%;
+            }
+
+            .photo-editor {
+                width: 90%;
+                padding: 15px;
             }
 
             h1 {
                 font-size: 24px;
             }
 
-            .current-picture {
+            .current-picture, .avatar-placeholder {
                 width: 100px;
                 height: 100px;
                 font-size: 40px;
@@ -256,6 +271,11 @@
                 width: 150px;
                 height: 150px;
             }
+
+            .photo-upload-btn, button[type="submit"], .toggle-password {
+                padding: 10px;
+                font-size: 14px;
+            }
         }
     </style>
 </head>
@@ -263,7 +283,8 @@
     <div class="credentials-container">
         <h1>Suas Credenciais</h1>
         <div class="info-section">
-            <div id="current-picture" class="current-picture"></div>
+            <img id="current-picture" class="current-picture" style="display: none;">
+            <div id="avatar-placeholder" class="avatar-placeholder"></div>
             <p><strong>Nome:</strong> <span id="current-name">Nome Atual</span></p>
             <p id="email-section" style="display: none;"><strong>Email:</strong> <span id="current-email">Email Atual</span></p>
             <div id="password-section" class="password-container" style="display: none;">
@@ -319,6 +340,7 @@
             const emailSection = document.getElementById('email-section');
             const passwordSection = document.getElementById('password-section');
             const currentPicture = document.getElementById('current-picture');
+            const avatarPlaceholder = document.getElementById('avatar-placeholder');
             const displayNameInput = document.getElementById('display-name');
 
             // Define nome
@@ -348,16 +370,17 @@
             // Configura foto ou avatar
             if (display.picture) {
                 currentPicture.src = display.picture;
-                currentPicture.style.background = 'none';
-                currentPicture.textContent = '';
+                currentPicture.style.display = 'block';
+                avatarPlaceholder.style.display = 'none';
             } else if (user.picture && user.type === 'google') {
                 currentPicture.src = user.picture;
-                currentPicture.style.background = 'none';
-                currentPicture.textContent = '';
+                currentPicture.style.display = 'block';
+                avatarPlaceholder.style.display = 'none';
             } else {
-                currentPicture.src = '';
-                currentPicture.style.background = getAvatarColor(name);
-                currentPicture.textContent = name.charAt(0);
+                currentPicture.style.display = 'none';
+                avatarPlaceholder.style.display = 'flex';
+                avatarPlaceholder.style.background = getAvatarColor(name);
+                avatarPlaceholder.textContent = name.charAt(0);
             }
         }
 
@@ -380,6 +403,8 @@
         let zoom = 1;
         let isDragging = false;
         let startX, startY;
+        let pinchScale = 1;
+        let lastPinchDistance = null;
 
         // Função para abrir painel de edição
         document.getElementById('photo-upload').addEventListener('change', function (e) {
@@ -392,6 +417,7 @@
                     const photoEditor = document.getElementById('photo-editor');
                     editImage.src = photoData;
                     zoom = 1;
+                    pinchScale = 1;
                     offsetX = 0;
                     offsetY = 0;
                     updateImagePosition();
@@ -401,21 +427,23 @@
             }
         });
 
-        // Função para atualizar posição e zoom da imagem
+        // Função para atualizar posição e zoom
         function updateImagePosition() {
             const editImage = document.getElementById('edit-image');
-            editImage.style.transform = `scale(${zoom}) translate(${offsetX}px, ${offsetY}px)`;
+            const totalScale = zoom * pinchScale;
+            editImage.style.transform = `scale(${totalScale}) translate(${offsetX}px, ${offsetY}px)`;
         }
 
-        // Evento para zoom
+        // Evento para zoom com slider
         document.getElementById('zoom').addEventListener('input', function (e) {
             zoom = parseFloat(e.target.value);
             updateImagePosition();
         });
 
-        // Eventos para arrastar
+        // Eventos para arrastar (desktop)
         const photoPreview = document.getElementById('photo-preview');
         photoPreview.addEventListener('mousedown', function (e) {
+            e.preventDefault();
             isDragging = true;
             startX = e.clientX - offsetX;
             startY = e.clientY - offsetY;
@@ -437,6 +465,54 @@
             isDragging = false;
         });
 
+        // Eventos para arrastar e pinch-to-zoom (celular)
+        photoPreview.addEventListener('touchstart', function (e) {
+            e.preventDefault();
+            if (e.touches.length === 1) {
+                isDragging = true;
+                const touch = e.touches[0];
+                startX = touch.clientX - offsetX;
+                startY = touch.clientY - offsetY;
+            } else if (e.touches.length === 2) {
+                isDragging = false;
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                lastPinchDistance = Math.hypot(
+                    touch1.clientX - touch2.clientX,
+                    touch1.clientY - touch2.clientY
+                );
+            }
+        });
+
+        photoPreview.addEventListener('touchmove', function (e) {
+            e.preventDefault();
+            if (isDragging && e.touches.length === 1) {
+                const touch = e.touches[0];
+                offsetX = touch.clientX - startX;
+                offsetY = touch.clientY - startY;
+                updateImagePosition();
+            } else if (e.touches.length === 2) {
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                const currentDistance = Math.hypot(
+                    touch1.clientX - touch2.clientX,
+                    touch1.clientY - touch2.clientY
+                );
+                if (lastPinchDistance !== null) {
+                    const scaleChange = currentDistance / lastPinchDistance;
+                    pinchScale *= scaleChange;
+                    pinchScale = Math.max(1, Math.min(pinchScale, 3));
+                    updateImagePosition();
+                }
+                lastPinchDistance = currentDistance;
+            }
+        });
+
+        photoPreview.addEventListener('touchend', function (e) {
+            isDragging = false;
+            lastPinchDistance = null;
+        });
+
         // Função para confirmar foto
         function confirmPhoto() {
             const canvas = document.createElement('canvas');
@@ -449,13 +525,14 @@
                 ctx.beginPath();
                 ctx.arc(100, 100, 100, 0, Math.PI * 2);
                 ctx.clip();
-                const scale = zoom * (img.width / 200);
+                const totalScale = zoom * pinchScale;
+                const scale = totalScale * (img.width / 200);
                 const drawX = (100 - (img.width / scale) / 2) + (offsetX / scale);
                 const drawY = (100 - (img.height / scale) / 2) + (offsetY / scale);
                 ctx.drawImage(img, drawX, drawY, img.width / scale, img.height / scale);
-                photoData = canvas.toDataURL('image/png');
+                const newPhotoData = canvas.toDataURL('image/png');
                 document.getElementById('photo-editor').style.display = 'none';
-                saveDisplay(document.getElementById('display-name').value, photoData);
+                saveDisplay(document.getElementById('display-name').value, newPhotoData);
             };
         }
 
@@ -464,6 +541,17 @@
             document.getElementById('photo-editor').style.display = 'none';
             document.getElementById('photo-upload').value = '';
             photoData = null;
+        }
+
+        // Função para salvar alterações
+        function saveDisplay(name, picture) {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const display = {
+                name: name || user.name || 'Amigo',
+                picture: picture || null
+            };
+            localStorage.setItem('display', JSON.stringify(display));
+            loadUserInfo();
         }
 
         // Função para salvar alterações visuais
@@ -481,18 +569,6 @@
 
             saveDisplay(displayName, JSON.parse(localStorage.getItem('display') || '{}').picture);
         });
-
-        // Função para salvar display
-        function saveDisplay(name, picture) {
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            const display = {
-                name: name || user.name || 'Amigo',
-                picture: picture || null
-            };
-            localStorage.setItem('display', JSON.stringify(display));
-            loadUserInfo();
-            window.location.reload();
-        }
 
         // Verifica autenticação
         function checkAuth() {
