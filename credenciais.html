@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkBit - Credenciais</title>
+    <style>
+        /* Estilo do componente de perfil */
+        .profile-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            z-index: 1000;
+        }
+
+        .profile-picture {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #6e8efb;
+            margin-right: 10px;
+            transition: transform 0.2s ease;
+        }
+
+        .profile-picture:hover {
+            transform: scale(1.1);
+        }
+
+        .profile-name {
+            color: #333;
+            font-size: 16px;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .profile-dropdown {
+            display: none;
+            position: absolute;
+            top: 60px;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            width: 150px;
+            animation: slideDown 0.3s ease;
+        }
+
+        .profile-container:hover .profile-dropdown,
+        .profile-dropdown:hover {
+            display: block;
+        }
+
+        .profile-dropdown a {
+            display: block;
+            padding: 10px;
+            color: #6e8efb;
+            text-decoration: none;
+            font-size: 14px;
+            transition: background 0.2s ease;
+        }
+
+        .profile-dropdown a:hover {
+            background: #f0f4ff;
+            border-radius: 5px;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Estilo da página */
+        body {
+            background: linear-gradient(135deg, #f0f4ff, #e6e9ff);
+            font-family: 'Arial', sans-serif;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .credentials-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            color: #6e8efb;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .current-info {
+            margin-bottom: 20px;
+        }
+
+        .current-picture {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #6e8efb;
+            margin-bottom: 10px;
+        }
+
+        .current-name {
+            color: #333;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        input[type="text"],
+        input[type="file"] {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        input[type="text"]:focus {
+            border-color: #6e8efb;
+            outline: none;
+        }
+
+        button {
+            padding: 10px;
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        #error-message {
+            color: red;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .credentials-container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Componente de perfil -->
+    <div class="profile-container">
+        <img class="profile-picture" src="https://via.placeholder.com/40" alt="Foto de Perfil">
+        <span class="profile-name">Amigo</span>
+        <div class="profile-dropdown">
+            <a href="perfil_cliente.html">Perfil</a>
+            <a href="credenciais.html">Credenciais</a>
+        </div>
+    </div>
+
+    <!-- Conteúdo da página -->
+    <div class="credentials-container">
+        <h1>Suas Credenciais</h1>
+        <div class="current-info">
+            <img class="current-picture" src="https://via.placeholder.com/100" alt="Foto Atual">
+            <p class="current-name">Nome Atual</p>
+        </div>
+        <form id="credentials-form">
+            <input type="text" id="display-name" placeholder="Novo nome de usuário">
+            <input type="file" id="photo-upload" accept="image/*">
+            <button type="submit">Salvar Alterações</button>
+        </form>
+        <p id="error-message" style="display: none;"></p>
+    </div>
+
+    <script>
+        // Função para carregar informações do usuário
+        function loadUserInfo() {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const display = JSON.parse(localStorage.getItem('display') || '{}');
+            const profileName = document.querySelector('.profile-name');
+            const profilePicture = document.querySelector('.profile-picture');
+            const currentName = document.querySelector('.current-name');
+            const currentPicture = document.querySelector('.current-picture');
+            const displayNameInput = document.getElementById('display-name');
+
+            // Atualiza componente de perfil
+            if (profileName) {
+                profileName.textContent = display.name || user.name || 'Amigo';
+            }
+            if (profilePicture) {
+                profilePicture.src = display.picture || user.picture || 'https://via.placeholder.com/40';
+            }
+
+            // Atualiza informações atuais
+            if (currentName) {
+                currentName.textContent = display.name || user.name || 'Amigo';
+            }
+            if (currentPicture) {
+                currentPicture.src = display.picture || user.picture || 'https://via.placeholder.com/100';
+            }
+
+            // Preenche campo de nome
+            if (displayNameInput) {
+                displayNameInput.value = display.name || user.name || '';
+            }
+        }
+
+        // Função para salvar alterações visuais
+        document.getElementById('credentials-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const displayName = document.getElementById('display-name').value;
+            const photoFile = document.getElementById('photo-upload').files[0];
+            const errorMessage = document.getElementById('error-message');
+            const display = JSON.parse(localStorage.getItem('display') || '{}');
+
+            // Valida nome (não pode ser vazio para formulário)
+            if (user.type === 'form' && !displayName) {
+                errorMessage.textContent = 'O nome não pode ser vazio!';
+                errorMessage.style.display = 'block';
+                return;
+            }
+
+            // Processa foto
+            let picture = display.picture || user.picture || 'https://via.placeholder.com/100';
+            if (photoFile) {
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    picture = event.target.result;
+                    saveDisplay(displayName, picture);
+                };
+                reader.readAsDataURL(photoFile);
+            } else {
+                saveDisplay(displayName, picture);
+            }
+        });
+
+        // Função para salvar display no localStorage
+        function saveDisplay(name, picture) {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const display = {
+                name: name || user.name || 'Amigo',
+                picture: picture
+            };
+            localStorage.setItem('display', JSON.stringify(display));
+            loadUserInfo(); // Atualiza visualização
+            window.location.reload(); // Recarrega para refletir mudanças
+        }
+
+        // Verifica autenticação (restaurado do auth.html anterior)
+        function checkAuth() {
+            const currentPage = window.location.pathname.split('/').pop().toLowerCase();
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+            if (currentPage !== 'login.html') {
+                if (!user || !user.name) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+            } else {
+                const profileContainer = document.querySelector('.profile-container');
+                if (profileContainer) profileContainer.style.display = 'none';
+            }
+
+            loadUserInfo();
+        }
+
+        // Executa ao carregar
+        document.addEventListener('DOMContentLoaded', checkAuth);
+    </script>
+</body>
+</html>
