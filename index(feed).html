@@ -137,8 +137,8 @@
                     if (profileName) {
                         profileName.textContent = user.name || 'Usuário';
                     }
-                    if (profilePicture && user.picture) {
-                        profilePicture.src = user.picture;
+                    if (profilePicture) {
+                        profilePicture.src = user.picture || 'https://via.placeholder.com/40';
                     }
                 }
             } else {
