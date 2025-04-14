@@ -17,6 +17,7 @@
             background: linear-gradient(135deg, #f0f4ff, #e6e9ff);
             min-height: 100vh;
             display: flex;
+            overscroll-behavior: none;
         }
 
         .container {
@@ -29,41 +30,6 @@
         .main-content {
             flex: 1;
             padding: 20px;
-        }
-
-        .profile-section {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .profile-picture {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid #6e8efb;
-            display: none;
-        }
-
-        .avatar-placeholder {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            border: 2px solid #6e8efb;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            color: white;
-            text-transform: uppercase;
-        }
-
-        .profile-name {
-            font-size: 20px;
-            color: #333;
-            font-weight: 600;
         }
 
         .feed {
@@ -100,14 +66,55 @@
 
         /* Barra lateral */
         .sidebar {
-            width: 250px;
+            width: 200px;
             background: rgba(255, 255, 255, 0.95);
-            border-left: 1px solid #ddd;
             padding: 20px;
             box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
             display: flex;
             flex-direction: column;
+            gap: 15px;
+            position: fixed;
+            right: 0;
+            top: 0;
+            height: 100vh;
+            z-index: 500;
+        }
+
+        .profile-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .profile-picture {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #6e8efb;
+            display: none;
+        }
+
+        .avatar-placeholder {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 2px solid #6e8efb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            text-transform: uppercase;
+        }
+
+        .profile-name {
+            font-size: 16px;
+            color: #333;
+            font-weight: 600;
+            text-align: center;
         }
 
         .sidebar button {
@@ -116,7 +123,7 @@
             color: white;
             border: none;
             border-radius: 8px;
-            font-size: 16px;
+            font-size: 14px;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -130,7 +137,7 @@
         }
 
         .sidebar button i {
-            font-size: 18px;
+            font-size: 16px;
         }
 
         .sidebar button:disabled {
@@ -139,31 +146,44 @@
         }
 
         @media (max-width: 800px) {
-            body {
-                flex-direction: column;
-            }
-
             .container {
                 flex-direction: column;
             }
 
             .sidebar {
-                width: 100%;
-                border-left: none;
-                border-top: 1px solid #ddd;
-                flex-direction: row;
-                justify-content: center;
-                gap: 15px;
-                padding: 15px;
+                width: 70px;
+                padding: 10px;
+                align-items: center;
+            }
+
+            .profile-name {
+                font-size: 12px;
+                max-width: 60px;
+                word-wrap: break-word;
+            }
+
+            .profile-picture, .avatar-placeholder {
+                width: 40px;
+                height: 40px;
+                font-size: 16px;
             }
 
             .sidebar button {
-                padding: 10px 15px;
-                font-size: 14px;
+                padding: 10px;
+                justify-content: center;
             }
 
-            .profile-section {
-                justify-content: center;
+            .sidebar button span {
+                display: none;
+            }
+
+            .sidebar button i {
+                font-size: 20px;
+            }
+
+            .main-content {
+                padding: 15px;
+                margin-right: 70px;
             }
 
             .iframe-container iframe {
@@ -175,22 +195,17 @@
 
         @media (max-width: 600px) {
             .main-content {
-                padding: 15px;
-            }
-
-            .profile-picture, .avatar-placeholder {
-                width: 50px;
-                height: 50px;
-                font-size: 20px;
-            }
-
-            .profile-name {
-                font-size: 18px;
+                padding: 10px;
+                margin-right: 60px;
             }
 
             .sidebar {
-                flex-direction: row;
-                flex-wrap: wrap;
+                width: 60px;
+                padding: 8px;
+            }
+
+            .feed {
+                padding: 15px;
             }
         }
     </style>
@@ -198,21 +213,23 @@
 <body>
     <div class="container">
         <div class="main-content">
-            <div class="profile-section">
-                <img id="profile-picture" class="profile-picture">
-                <div id="avatar-placeholder" class="avatar-placeholder"></div>
-                <span id="profile-name" class="profile-name">Nome Atual</span>
-            </div>
             <div class="feed">
                 <p class="feed-placeholder">Aqui aparecerão seus posts em breve!</p>
             </div>
         </div>
         <div class="sidebar">
+            <div class="profile-section">
+                <img id="profile-picture" class="profile-picture">
+                <div id="avatar-placeholder" class="avatar-placeholder"></div>
+                <span id="profile-name" class="profile-name">Nome Atual</span>
+            </div>
             <button onclick="logout()">
-                <i class="fas fa-sign-out-alt"></i> Sair
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Sair</span>
             </button>
             <button disabled>
-                <i class="fas fa-server"></i> Canal
+                <i class="fas fa-server"></i>
+                <span>Canal</span>
             </button>
         </div>
     </div>
