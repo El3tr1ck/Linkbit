@@ -226,6 +226,7 @@
 
         .media-options input {
             margin-top: 5px;
+            width: 100%;
         }
 
         .submit-btn {
@@ -360,16 +361,16 @@
             <textarea id="postText" placeholder="No que você está pensando?" maxlength="280"></textarea>
             <div id="textPreview" class="text-preview"></div>
             <div class="media-buttons">
-                <button onclick="toggleMediaOptions('image')"><i class="fas fa-image"></i></button>
-                <button onclick="toggleMediaOptions('video')"><i class="fas fa-video"></i></button>
+                <button id="imageBtn"><i class="fas fa-image"></i></button>
+                <button id="videoBtn"><i class="fas fa-video"></i></button>
             </div>
             <div id="mediaOptions" class="media-options">
-                <button onclick="selectMedia('upload')">Upload</button>
-                <button onclick="selectMedia('url')">URL</button>
-                <input type="file" id="mediaUpload" style="display: none;" accept="image/*,video/*,image/gif">
-                <input type="text" id="mediaUrl" placeholder="Cole a URL da imagem ou vídeo" style="display: none;">
+                <button id="uploadBtn">Upload</button>
+                <button id="urlBtn">URL</button>
+                <input type="file" id="mediaUpload" accept="image/*,video/*,image/gif">
+                <input type="text" id="mediaUrl" placeholder="Cole a URL da imagem ou vídeo">
             </div>
-            <button class="submit-btn" onclick="submitPost()">Enviar</button>
+            <button class="submit-btn" id="submitPostBtn">Enviar</button>
         </div>
     </div>
 
@@ -402,12 +403,11 @@
         // Função para criar um post
         async function createPost(title, text, media = null) {
             try {
-                console.log('Criando post com:', { title, text, media });
+                console.log('Criando post:', { title, text, media });
                 let user = auth.currentUser;
                 let localUser = JSON.parse(localStorage.getItem('user') || '{}');
                 let display = JSON.parse(localStorage.getItem('display') || '{}');
 
-                // Autenticar como anônimo se necessário
                 if (!user && (!localUser || !localUser.name)) {
                     console.log('Autenticando como anônimo');
                     await signInAnonymously(auth);
@@ -435,16 +435,17 @@
         }
 
         // Função para upload de mídia
-        async function uploadMedia(file, type) {
+        async function uploadMedia(file) {
             try {
-                console.log('Fazendo upload de mídia:', file.name);
+                console.log('Iniciando upload:', file.name);
                 const storageRef = ref(storage, `media/${Date.now()}_${file.name}`);
                 await uploadBytes(storageRef, file);
                 const url = await getDownloadURL(storageRef);
-                console.log('Mídia enviada:', url);
+                const type = file.type.startsWith('video') ? 'video' : file.type === 'image/gif' ? 'gif' : 'image';
+                console.log('Upload concluído:', url);
                 return { type, url, embed: '' };
             } catch (error) {
-                console.error('Erro ao fazer upload:', error);
+                console.error('Erro no upload:', error);
                 throw error;
             }
         }
@@ -453,29 +454,40 @@
         function processVideoUrl(url) {
             try {
                 console.log('Processando URL:', url);
-                if (url.includes('youtube.com') || url.includes('youtu.be')) {
-                    const videoId = url.match(/(?:v=|\/)([0-9A-Za-z_-]{11})/)?.[1];
+                const trimmedUrl = url.trim();
+                if (!trimmedUrl) {
+                    console.log('URL vazia');
+                    return null;
+                }
+                if (trimmedUrl.includes('youtube.com') || trimmedUrl.includes('youtu.be')) {
+                    const videoId = trimmedUrl.match(/(?:v=|\/)([0-9A-Za-z_-]{11})/)?.[1] ||
+                                    trimmedUrl.match(/youtu\.be\/([0-9A-Za-z_-]{11})/)?.[1];
                     if (videoId) {
+                        console.log('YouTube video ID:', videoId);
                         return {
                             type: 'video',
-                            url,
+                            url: trimmedUrl,
                             embed: `<iframe width="450" height="253" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen></iframe>`
                         };
                     }
-                } else if (url.includes('tiktok.com')) {
-                    const videoId = url.match(/\/video\/(\d+)/)?.[1];
+                } else if (trimmedUrl.includes('tiktok.com')) {
+                    const videoId = trimmedUrl.match(/\/video\/(\d+)/)?.[1];
                     if (videoId) {
+                        console.log('TikTok video ID:', videoId);
                         return {
                             type: 'video',
-                            url,
+                            url: trimmedUrl,
                             embed: `<iframe width="325" height="575" src="https://www.tiktok.com/embed/v2/${videoId}" frameborder="0" allowfullscreen></iframe>`
                         };
                     }
+                } else if (trimmedUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+                    console.log('Imagem detectada');
+                    return { type: 'image', url: trimmedUrl, embed: '' };
                 }
-                console.log('URL tratada como imagem');
-                return { type: 'image', url, embed: '' };
+                console.log('URL não suportada');
+                return null;
             } catch (error) {
-                console.error('Erro ao processar mídia:', error);
+                console.error('Erro ao processar URL:', error);
                 return null;
             }
         }
@@ -490,8 +502,8 @@
                 document.getElementById('postText').value = '';
                 document.getElementById('textPreview').innerHTML = '';
                 document.getElementById('mediaOptions').style.display = 'none';
-                document.getElementById('mediaUpload').style.display = 'none';
-                document.getElementById('mediaUrl').style.display = 'none';
+                document.getElementById('mediaUpload').value = '';
+                document.getElementById('mediaUrl').value = '';
             } else {
                 console.error('Modal não encontrado');
             }
@@ -505,88 +517,108 @@
             }
         }
 
-        function toggleMediaOptions(type) {
-            console.log('Toggling media options:', type);
-            const mediaOptions = document.getElementById('mediaOptions');
-            mediaOptions.style.display = mediaOptions.style.display === 'block' ? 'none' : 'block';
-            mediaOptions.dataset.type = type;
-        }
-
-        function selectMedia(method) {
-            console.log('Selecionando mídia:', method);
+        // Configurar eventos do modal
+        function setupModalEvents() {
+            console.log('Configurando eventos do modal');
+            const imageBtn = document.getElementById('imageBtn');
+            const videoBtn = document.getElementById('videoBtn');
+            const uploadBtn = document.getElementById('uploadBtn');
+            const urlBtn = document.getElementById('urlBtn');
             const mediaOptions = document.getElementById('mediaOptions');
             const uploadInput = document.getElementById('mediaUpload');
             const urlInput = document.getElementById('mediaUrl');
-            if (method === 'upload') {
+            const submitBtn = document.getElementById('submitPostBtn');
+
+            imageBtn.addEventListener('click', () => {
+                console.log('Botão Imagem clicado');
+                mediaOptions.style.display = mediaOptions.style.display === 'block' ? 'none' : 'block';
+                mediaOptions.dataset.type = 'image';
+            });
+
+            videoBtn.addEventListener('click', () => {
+                console.log('Botão Vídeo clicado');
+                mediaOptions.style.display = mediaOptions.style.display === 'block' ? 'none' : 'block';
+                mediaOptions.dataset.type = 'video';
+            });
+
+            uploadBtn.addEventListener('click', () => {
+                console.log('Botão Upload clicado');
                 uploadInput.style.display = 'block';
                 urlInput.style.display = 'none';
                 uploadInput.click();
-            } else {
+            });
+
+            urlBtn.addEventListener('click', () => {
+                console.log('Botão URL clicado');
                 urlInput.style.display = 'block';
                 uploadInput.style.display = 'none';
                 urlInput.focus();
-            }
-        }
+            });
 
-        async function submitPost() {
-            console.log('Enviando post');
-            const title = document.getElementById('postTitle').value;
-            const text = document.getElementById('postText').value;
-            const uploadInput = document.getElementById('mediaUpload');
-            const urlInput = document.getElementById('mediaUrl');
+            submitBtn.addEventListener('click', async () => {
+                console.log('Botão Enviar clicado');
+                const title = document.getElementById('postTitle').value;
+                const text = document.getElementById('postText').value;
+                const uploadInput = document.getElementById('mediaUpload');
+                const urlInput = document.getElementById('mediaUrl');
 
-            if (!text.trim()) {
-                alert('Escreva algo no post!');
-                console.log('Texto vazio');
-                return;
-            }
-
-            let media = null;
-            if (uploadInput.files[0]) {
-                const file = uploadInput.files[0];
-                const type = file.type.startsWith('video') ? 'video' : file.type === 'image/gif' ? 'gif' : 'image';
-                media = await uploadMedia(file, type);
-            } else if (urlInput.value.trim()) {
-                media = processVideoUrl(urlInput.value);
-                if (!media) {
-                    alert('URL inválida!');
-                    console.log('URL inválida');
+                if (!text.trim()) {
+                    alert('Escreva algo no post!');
+                    console.log('Texto vazio');
                     return;
                 }
-            }
 
-            try {
-                await createPost(title, text, media);
-                closePostModal();
-                alert('Post criado com sucesso!');
-            } catch (error) {
-                alert('Erro ao criar post: ' + error.message);
-                console.error('Erro no submit:', error);
-            }
-        }
-
-        // Detectar menções @usuário
-        document.getElementById('postText').addEventListener('input', function () {
-            console.log('Detectando menções');
-            const text = this.value;
-            const preview = document.getElementById('textPreview');
-            const words = text.split(/(\s+)/);
-            preview.innerHTML = words
-                .map(word => {
-                    if (word.startsWith('@') && word.length > 1) {
-                        return `<span class="mention">${word}</span>`;
+                let media = null;
+                if (uploadInput.files[0]) {
+                    console.log('Arquivo selecionado:', uploadInput.files[0].name);
+                    try {
+                        media = await uploadMedia(uploadInput.files[0]);
+                    } catch (error) {
+                        alert('Erro ao fazer upload: ' + error.message);
+                        return;
                     }
-                    return word;
-                })
-                .join('');
-        });
+                } else if (urlInput.value.trim()) {
+                    console.log('URL inserida:', urlInput.value);
+                    media = processVideoUrl(urlInput.value);
+                    if (!media) {
+                        alert('URL inválida ou não suportada!');
+                        return;
+                    }
+                }
 
-        // Fechar modal ao clicar fora
-        document.getElementById('postModal').addEventListener('click', function (e) {
-            if (e.target === this) {
-                closePostModal();
-            }
-        });
+                try {
+                    await createPost(title, text, media);
+                    closePostModal();
+                    alert('Post criado com sucesso!');
+                } catch (error) {
+                    alert('Erro ao criar post: ' + error.message);
+                    console.error('Erro no submit:', error);
+                }
+            });
+
+            // Detectar menções @usuário
+            document.getElementById('postText').addEventListener('input', function () {
+                console.log('Detectando menções');
+                const text = this.value;
+                const preview = document.getElementById('textPreview');
+                const words = text.split(/(\s+)/);
+                preview.innerHTML = words
+                    .map(word => {
+                        if (word.startsWith('@') && word.length > 1) {
+                            return `<span class="mention">${word}</span>`;
+                        }
+                        return word;
+                    })
+                    .join('');
+            });
+
+            // Fechar modal ao clicar fora
+            document.getElementById('postModal').addEventListener('click', function (e) {
+                if (e.target === this) {
+                    closePostModal();
+                }
+            });
+        }
 
         // Adicionar evento ao botão de criar post
         document.getElementById('createPostBtn').addEventListener('click', () => {
@@ -670,9 +702,11 @@
             }
         });
 
+        // Inicializar eventos
         document.addEventListener('DOMContentLoaded', () => {
             console.log('Página carregada');
             checkAuth();
+            setupModalEvents();
         });
     </script>
 </body>
