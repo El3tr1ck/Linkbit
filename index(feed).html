@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LinkBit - Feed</title>
     <style>
-        /* CSS do auth.html */
+        /* Estilo do componente de perfil */
         .profile-container {
             position: fixed;
             top: 20px;
@@ -74,27 +74,7 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        @media (max-width: 600px) {
-            .profile-container {
-                top: 10px;
-                right: 10px;
-            }
-
-            .profile-name {
-                font-size: 14px;
-            }
-
-            .profile-picture {
-                width: 35px;
-                height: 35px;
-            }
-
-            .profile-dropdown {
-                width: 120px;
-            }
-        }
-
-        /* Estilo básico do feed */
+        /* Estilo do feed */
         body {
             background: linear-gradient(135deg, #f0f4ff, #e6e9ff);
             font-family: 'Arial', sans-serif;
@@ -105,51 +85,128 @@
             text-align: center;
             color: #6e8efb;
         }
+
+        /* Estilo do painel de credenciais */
+        .credentials-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            max-width: 450px;
+            width: 100%;
+            z-index: 2000;
+            text-align: center;
+        }
+
+        .credentials-panel h2 {
+            color: #6e8efb;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        .credentials-panel iframe {
+            width: 100%;
+            height: 400px;
+            border: none;
+            border-radius: 10px;
+        }
+
+        .credentials-panel button {
+            padding: 10px;
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: transform 0.3s ease;
+        }
+
+        .credentials-panel button:hover {
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 600px) {
+            .credentials-panel {
+                max-width: 90%;
+            }
+
+            .credentials-panel iframe {
+                height: 350px;
+            }
+        }
     </style>
 </head>
 <body>
     <!-- Componente de perfil -->
     <div class="profile-container">
         <img class="profile-picture" src="https://via.placeholder.com/40" alt="Foto de Perfil">
-        <span class="profile-name"></span>
+        <span class="profile-name">Amigo</span>
         <div class="profile-dropdown">
             <a href="perfil_cliente.html">Perfil</a>
             <a href="credenciais.html">Credenciais</a>
         </div>
     </div>
 
+    <!-- Painel de credenciais (para formulário) -->
+    <div class="credentials-panel" id="credentials-panel" style="display: none;">
+        <h2>Edite suas informações antes de continuar!</h2>
+        <iframe src="credenciais.html"></iframe>
+        <button onclick="closeCredentialsPanel()">Concluir</button>
+    </div>
+
     <!-- Conteúdo do Feed -->
     <h1>Bem-vindo ao Feed da LinkBit!</h1>
-    <p>Aqui vão os posts (em desenvolvimento).</p>
+    <p>Um espaço para amigos compartilharem momentos!</p>
 
     <script>
-        // JavaScript do auth.html
-        function initAuth() {
-            const currentPage = window.location.pathname.split('/').pop().toLowerCase();
-            const user = JSON.parse(localStorage.getItem('user'));
+        // Função para carregar informações do usuário
+        function loadUserInfo() {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const display = JSON.parse(localStorage.getItem('display') || '{}');
+            const profileName = document.querySelector('.profile-name');
+            const profilePicture = document.querySelector('.profile-picture');
 
-            if (currentPage !== 'login.html') {
-                if (!user) {
-                    window.location.href = 'login.html';
-                } else {
-                    const profileName = document.querySelector('.profile-name');
-                    const profilePicture = document.querySelector('.profile-picture');
-                    if (profileName) {
-                        profileName.textContent = user.name || 'Usuário';
-                    }
-                    if (profilePicture) {
-                        profilePicture.src = user.picture || 'https://via.placeholder.com/40';
-                    }
-                }
-            } else {
-                const profileContainer = document.querySelector('.profile-container');
-                if (profileContainer) {
-                    profileContainer.style.display = 'none';
-                }
+            if (profileName) {
+                profileName.textContent = display.name || user.name || 'Amigo';
+            }
+            if (profilePicture) {
+                profilePicture.src = display.picture || user.picture || 'https://via.placeholder.com/40';
             }
         }
 
-        document.addEventListener('DOMContentLoaded', initAuth);
+        // Função para verificar autenticação
+        function checkAuth() {
+            const currentPage = window.location.pathname.split('/').pop().toLowerCase();
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+            if (currentPage !== 'login.html') {
+                if (!user || !user.name) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                // Exibe painel para formulário
+                if (user.type === 'form' && !localStorage.getItem('display')) {
+                    document.getElementById('credentials-panel').style.display = 'block';
+                }
+            }
+
+            loadUserInfo();
+        }
+
+        // Função para fechar painel
+        function closeCredentialsPanel() {
+            document.getElementById('credentials-panel').style.display = 'none';
+        }
+
+        // Executa ao carregar
+        document.addEventListener('DOMContentLoaded', checkAuth);
     </script>
 </body>
 </html>
