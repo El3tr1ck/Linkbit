@@ -1,1 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkBit - Feed</title>
+    <style>
+        /* CSS do auth.html */
+        .profile-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            z-index: 1000;
+        }
 
+        .profile-picture {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #6e8efb;
+            margin-right: 10px;
+            transition: transform 0.2s ease;
+        }
+
+        .profile-picture:hover {
+            transform: scale(1.1);
+        }
+
+        .profile-name {
+            color: #333;
+            font-size: 16px;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .profile-dropdown {
+            display: none;
+            position: absolute;
+            top: 60px;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            width: 150px;
+            animation: slideDown 0.3s ease;
+        }
+
+        .profile-container:hover .profile-dropdown,
+        .profile-dropdown:hover {
+            display: block;
+        }
+
+        .profile-dropdown a {
+            display: block;
+            padding: 10px;
+            color: #6e8efb;
+            text-decoration: none;
+            font-size: 14px;
+            transition: background 0.2s ease;
+        }
+
+        .profile-dropdown a:hover {
+            background: #f0f4ff;
+            border-radius: 5px;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 600px) {
+            .profile-container {
+                top: 10px;
+                right: 10px;
+            }
+
+            .profile-name {
+                font-size: 14px;
+            }
+
+            .profile-picture {
+                width: 35px;
+                height: 35px;
+            }
+
+            .profile-dropdown {
+                width: 120px;
+            }
+        }
+
+        /* Estilo básico do feed */
+        body {
+            background: linear-gradient(135deg, #f0f4ff, #e6e9ff);
+            font-family: 'Arial', sans-serif;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #6e8efb;
+        }
+    </style>
+</head>
+<body>
+    <!-- Componente de perfil -->
+    <div class="profile-container">
+        <img class="profile-picture" src="https://via.placeholder.com/40" alt="Foto de Perfil">
+        <span class="profile-name"></span>
+        <div class="profile-dropdown">
+            <a href="perfil_cliente.html">Perfil</a>
+            <a href="credenciais.html">Credenciais</a>
+        </div>
+    </div>
+
+    <!-- Conteúdo do Feed -->
+    <h1>Bem-vindo ao Feed da LinkBit!</h1>
+    <p>Aqui vão os posts (em desenvolvimento).</p>
+
+    <script>
+        // JavaScript do auth.html
+        function initAuth() {
+            const currentPage = window.location.pathname.split('/').pop().toLowerCase();
+            const user = JSON.parse(localStorage.getItem('user'));
+
+            if (currentPage !== 'login.html') {
+                if (!user) {
+                    window.location.href = 'login.html';
+                } else {
+                    const profileName = document.querySelector('.profile-name');
+                    const profilePicture = document.querySelector('.profile-picture');
+                    if (profileName) {
+                        profileName.textContent = user.name || 'Usuário';
+                    }
+                    if (profilePicture && user.picture) {
+                        profilePicture.src = user.picture;
+                    }
+                }
+            } else {
+                const profileContainer = document.querySelector('.profile-container');
+                if (profileContainer) {
+                    profileContainer.style.display = 'none';
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initAuth);
+    </script>
+</body>
+</html>
