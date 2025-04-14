@@ -242,7 +242,7 @@
         </div>
     </div>
     <div class="iframe-container" id="iframe-container">
-        <iframe src="credenciais.html"></iframe>
+        <iframe src="/credenciais"></iframe>
     </div>
 
     <script>
@@ -293,25 +293,24 @@
             localStorage.removeItem('user');
             localStorage.removeItem('display');
             localStorage.removeItem('codeData');
-            window.location.href = 'login.html';
+            window.location.href = '/login'; // Atualizado de 'login.html'
         }
 
         // Função para ir para credenciais
         function goToCredentials() {
-            window.location.href = 'credenciais.html';
+            window.location.href = '/credenciais'; // Atualizado de 'credenciais.html'
         }
 
         // Função para ir para perfil
         function goToProfile() {
-            window.location.href = 'perfil_cliente.html';
+            window.location.href = '/perfil'; // Atualizado de 'perfil_cliente.html'
         }
 
         // Verifica autenticação
         function checkAuth() {
             const user = JSON.parse(localStorage.getItem('user') || '{}');
             if (!user || !user.name) {
-                window.location.href = 'login.html';
-                return;
+                window.location.href = '/login'; // Atualizado de 'login.html'
             }
             loadUserInfo();
         }
