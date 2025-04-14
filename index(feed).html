@@ -236,6 +236,8 @@
             border: none;
             border-radius: 8px;
             cursor: pointer;
+PRS: 8px;
+            cursor: pointer;
             width: 100%;
         }
 
@@ -402,42 +404,60 @@
 
         // Função para criar um post
         async function createPost(title, text, media = null) {
+            console.log('Iniciando createPost:', { title, text, media });
             try {
-                console.log('Criando post:', { title, text, media });
                 let user = auth.currentUser;
-                let localUser = JSON.parse(localStorage.getItem('user') || '{}');
-                let display = JSON.parse(localStorage.getItem('display') || '{}');
+                let localUser = {};
+                let display = {};
 
-                if (!user && (!localUser || !localUser.name)) {
-                    console.log('Autenticando como anônimo');
-                    await signInAnonymously(auth);
-                    user = auth.currentUser;
-                    localUser = { name: 'Convidado', type: 'guest' };
-                    localStorage.setItem('user', JSON.stringify(localUser));
+                // Tentar carregar localStorage com segurança
+                try {
+                    localUser = JSON.parse(localStorage.getItem('user') || '{}');
+                    display = JSON.parse(localStorage.getItem('display') || '{}');
+                } catch (e) {
+                    console.error('Erro ao parsear localStorage:', e);
+                    localUser = { name: 'Convidado' };
+                    display = {};
                 }
 
+                // Garantir autenticação
+                if (!user) {
+                    console.log('Nenhum usuário logado, tentando login anônimo');
+                    try {
+                        await signInAnonymously(auth);
+                        user = auth.currentUser;
+                        console.log('Login anônimo bem-sucedido:', user.uid);
+                    } catch (authError) {
+                        console.error('Erro no login anônimo:', authError);
+                        throw new Error('Falha na autenticação: ' + authError.message);
+                    }
+                }
+
+                // Montar o post
                 const post = {
-                    title: title ? title.substring(0, 100) : '',
-                    text: text.substring(0, 280),
+                    title: title ? String(title).substring(0, 100) : '',
+                    text: String(text).substring(0, 280),
                     media: media || {},
-                    author: display.name || localUser.name || user?.displayName || 'Convidado',
+                    author: display.name || localUser.name || 'Convidado',
                     createdAt: Timestamp.now(),
                     likes: []
                 };
+                console.log('Post a ser salvo:', post);
 
+                // Salvar no Firestore
                 const docRef = await addDoc(collection(db, 'posts'), post);
                 console.log('Post criado com ID:', docRef.id);
                 return docRef.id;
             } catch (error) {
-                console.error('Erro ao criar post:', error);
+                console.error('Erro detalhado em createPost:', error);
                 throw error;
             }
         }
 
         // Função para upload de mídia
         async function uploadMedia(file) {
+            console.log('Iniciando uploadMedia:', file.name);
             try {
-                console.log('Iniciando upload:', file.name);
                 const storageRef = ref(storage, `media/${Date.now()}_${file.name}`);
                 await uploadBytes(storageRef, file);
                 const url = await getDownloadURL(storageRef);
@@ -445,15 +465,15 @@
                 console.log('Upload concluído:', url);
                 return { type, url, embed: '' };
             } catch (error) {
-                console.error('Erro no upload:', error);
+                console.error('Erro em uploadMedia:', error);
                 throw error;
             }
         }
 
         // Função para processar URL de mídia
         function processVideoUrl(url) {
+            console.log('Iniciando processVideoUrl:', url);
             try {
-                console.log('Processando URL:', url);
                 const trimmedUrl = url.trim();
                 if (!trimmedUrl) {
                     console.log('URL vazia');
@@ -487,7 +507,7 @@
                 console.log('URL não suportada');
                 return null;
             } catch (error) {
-                console.error('Erro ao processar URL:', error);
+                console.error('Erro em processVideoUrl:', error);
                 return null;
             }
         }
@@ -563,36 +583,42 @@
                 const urlInput = document.getElementById('mediaUrl');
 
                 if (!text.trim()) {
+                    console.log('Texto vazio, bloqueando envio');
                     alert('Escreva algo no post!');
-                    console.log('Texto vazio');
                     return;
                 }
 
                 let media = null;
                 if (uploadInput.files[0]) {
-                    console.log('Arquivo selecionado:', uploadInput.files[0].name);
+                    console.log('Processando upload:', uploadInput.files[0].name);
                     try {
                         media = await uploadMedia(uploadInput.files[0]);
+                        console.log('Upload bem-sucedido:', media);
                     } catch (error) {
+                        console.error('Falha no upload:', error);
                         alert('Erro ao fazer upload: ' + error.message);
                         return;
                     }
                 } else if (urlInput.value.trim()) {
-                    console.log('URL inserida:', urlInput.value);
+                    console.log('Processando URL:', urlInput.value);
                     media = processVideoUrl(urlInput.value);
                     if (!media) {
+                        console.log('URL inválida');
                         alert('URL inválida ou não suportada!');
                         return;
                     }
+                    console.log('URL processada:', media);
                 }
 
+                console.log('Preparando para criar post');
                 try {
                     await createPost(title, text, media);
+                    console.log('Post enviado, fechando modal');
                     closePostModal();
                     alert('Post criado com sucesso!');
                 } catch (error) {
+                    console.error('Erro ao enviar post:', error);
                     alert('Erro ao criar post: ' + error.message);
-                    console.error('Erro no submit:', error);
                 }
             });
 
@@ -628,6 +654,7 @@
 
         // Funções existentes
         function getAvatarColor(name) {
+            console.log('Gerando cor do avatar para:', name);
             const colors = ['#6e8efb', '#a777e3', '#ff6b6b', '#4CAF50', '#FF9800', '#9C27B0'];
             let hash = 0;
             for (let i = 0; i < name.length; i++) {
@@ -696,7 +723,7 @@
 
         // Verificar autenticação Firebase
         onAuthStateChanged(auth, (user) => {
-            console.log('Estado de autenticação:', user ? 'Logado' : 'Deslogado');
+            console.log('Estado de autenticação:', user ? `Logado (${user.uid})` : 'Deslogado');
             if (!user && !localStorage.getItem('user')) {
                 window.location.href = '/login';
             }
