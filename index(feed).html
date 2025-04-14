@@ -4,208 +4,283 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LinkBit - Feed</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
-        /* Estilo do componente de perfil */
-        .profile-container {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            z-index: 1000;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
         }
 
-        .profile-picture {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid #6e8efb;
-            margin-right: 10px;
-            transition: transform 0.2s ease;
-        }
-
-        .profile-picture:hover {
-            transform: scale(1.1);
-        }
-
-        .profile-name {
-            color: #333;
-            font-size: 16px;
-            font-weight: 600;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
-        }
-
-        .profile-dropdown {
-            display: none;
-            position: absolute;
-            top: 60px;
-            right: 0;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 10px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
-            padding: 10px;
-            width: 150px;
-            animation: slideDown 0.3s ease;
-        }
-
-        .profile-container:hover .profile-dropdown,
-        .profile-dropdown:hover {
-            display: block;
-        }
-
-        .profile-dropdown a {
-            display: block;
-            padding: 10px;
-            color: #6e8efb;
-            text-decoration: none;
-            font-size: 14px;
-            transition: background 0.2s ease;
-        }
-
-        .profile-dropdown a:hover {
-            background: #f0f4ff;
-            border-radius: 5px;
-        }
-
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Estilo do feed */
         body {
             background: linear-gradient(135deg, #f0f4ff, #e6e9ff);
-            font-family: 'Arial', sans-serif;
+            min-height: 100vh;
+            display: flex;
+        }
+
+        .container {
+            display: flex;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .main-content {
+            flex: 1;
             padding: 20px;
         }
 
-        h1 {
-            text-align: center;
-            color: #6e8efb;
+        .profile-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
         }
 
-        /* Estilo do painel de credenciais */
-        .credentials-panel {
+        .profile-picture {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #6e8efb;
+            display: none;
+        }
+
+        .avatar-placeholder {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 2px solid #6e8efb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            text-transform: uppercase;
+        }
+
+        .profile-name {
+            font-size: 20px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .feed {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .feed-placeholder {
+            color: #666;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .iframe-container {
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(255, 255, 255, 0.95);
+            background: white;
             border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            padding: 20px;
-            max-width: 450px;
-            width: 100%;
-            z-index: 2000;
-            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 1000;
         }
 
-        .credentials-panel h2 {
-            color: #6e8efb;
-            margin-bottom: 15px;
-            font-size: 20px;
-        }
-
-        .credentials-panel iframe {
-            width: 100%;
-            height: 400px;
+        .iframe-container iframe {
             border: none;
-            border-radius: 10px;
+            width: 450px;
+            height: 600px;
+            border-radius: 15px;
         }
 
-        .credentials-panel button {
-            padding: 10px;
+        /* Barra lateral */
+        .sidebar {
+            width: 250px;
+            background: rgba(255, 255, 255, 0.95);
+            border-left: 1px solid #ddd;
+            padding: 20px;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .sidebar button {
+            padding: 12px 20px;
             background: linear-gradient(135deg, #6e8efb, #a777e3);
             color: white;
             border: none;
             border-radius: 8px;
             font-size: 16px;
             cursor: pointer;
-            margin-top: 10px;
-            transition: transform 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
-        .credentials-panel button:hover {
+        .sidebar button:hover {
             transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .sidebar button i {
+            font-size: 18px;
+        }
+
+        .sidebar button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 800px) {
+            body {
+                flex-direction: column;
+            }
+
+            .container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                border-left: none;
+                border-top: 1px solid #ddd;
+                flex-direction: row;
+                justify-content: center;
+                gap: 15px;
+                padding: 15px;
+            }
+
+            .sidebar button {
+                padding: 10px 15px;
+                font-size: 14px;
+            }
+
+            .profile-section {
+                justify-content: center;
+            }
+
+            .iframe-container iframe {
+                width: 100%;
+                max-width: 350px;
+                height: 500px;
+            }
         }
 
         @media (max-width: 600px) {
-            .credentials-panel {
-                max-width: 90%;
+            .main-content {
+                padding: 15px;
             }
 
-            .credentials-panel iframe {
-                height: 350px;
+            .profile-picture, .avatar-placeholder {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+
+            .profile-name {
+                font-size: 18px;
+            }
+
+            .sidebar {
+                flex-direction: row;
+                flex-wrap: wrap;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Componente de perfil -->
-    <div class="profile-container">
-        <img class="profile-picture" src="https://via.placeholder.com/40" alt="Foto de Perfil">
-        <span class="profile-name">Amigo</span>
-        <div class="profile-dropdown">
-            <a href="perfil_cliente.html">Perfil</a>
-            <a href="credenciais.html">Credenciais</a>
+    <div class="container">
+        <div class="main-content">
+            <div class="profile-section">
+                <img id="profile-picture" class="profile-picture">
+                <div id="avatar-placeholder" class="avatar-placeholder"></div>
+                <span id="profile-name" class="profile-name">Nome Atual</span>
+            </div>
+            <div class="feed">
+                <p class="feed-placeholder">Aqui aparecerão seus posts em breve!</p>
+            </div>
+        </div>
+        <div class="sidebar">
+            <button onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i> Sair
+            </button>
+            <button disabled>
+                <i class="fas fa-server"></i> Canal
+            </button>
         </div>
     </div>
-
-    <!-- Painel de credenciais (para formulário) -->
-    <div class="credentials-panel" id="credentials-panel" style="display: none;">
-        <h2>Edite suas informações antes de continuar!</h2>
+    <div class="iframe-container" id="iframe-container">
         <iframe src="credenciais.html"></iframe>
-        <button onclick="closeCredentialsPanel()">Concluir</button>
     </div>
 
-    <!-- Conteúdo do Feed -->
-    <h1>Bem-vindo ao Feed da LinkBit!</h1>
-    <p>Um espaço para amigos compartilharem momentos!</p>
-
     <script>
+        // Função para gerar cor de avatar
+        function getAvatarColor(name) {
+            const colors = ['#6e8efb', '#a777e3', '#ff6b6b', '#4CAF50', '#FF9800', '#9C27B0'];
+            let hash = 0;
+            for (let i = 0; i < name.length; i++) {
+                hash = name.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            return colors[Math.abs(hash) % colors.length];
+        }
+
         // Função para carregar informações do usuário
         function loadUserInfo() {
             const user = JSON.parse(localStorage.getItem('user') || '{}');
             const display = JSON.parse(localStorage.getItem('display') || '{}');
-            const profileName = document.querySelector('.profile-name');
-            const profilePicture = document.querySelector('.profile-picture');
+            const profileName = document.getElementById('profile-name');
+            const profilePicture = document.getElementById('profile-picture');
+            const avatarPlaceholder = document.getElementById('avatar-placeholder');
 
-            if (profileName) {
-                profileName.textContent = display.name || user.name || 'Amigo';
+            const name = display.name || user.name || 'Amigo';
+            profileName.textContent = name;
+
+            if (display.picture) {
+                profilePicture.src = display.picture;
+                profilePicture.style.display = 'block';
+                avatarPlaceholder.style.display = 'none';
+            } else if (user.picture && user.type === 'google') {
+                profilePicture.src = user.picture;
+                profilePicture.style.display = 'block';
+                avatarPlaceholder.style.display = 'none';
+            } else {
+                profilePicture.style.display = 'none';
+                avatarPlaceholder.style.display = 'flex';
+                avatarPlaceholder.style.background = getAvatarColor(name);
+                avatarPlaceholder.textContent = name.charAt(0);
             }
-            if (profilePicture) {
-                profilePicture.src = display.picture || user.picture || 'https://via.placeholder.com/40';
+
+            // Verifica se precisa do iframe
+            if (user.type === 'form' && !display.name && !display.picture) {
+                document.getElementById('iframe-container').style.display = 'block';
             }
         }
 
-        // Função para verificar autenticação
+        // Função de logout
+        function logout() {
+            localStorage.removeItem('user');
+            localStorage.removeItem('display');
+            localStorage.removeItem('codeData');
+            window.location.href = 'login.html';
+        }
+
+        // Verifica autenticação
         function checkAuth() {
-            const currentPage = window.location.pathname.split('/').pop().toLowerCase();
             const user = JSON.parse(localStorage.getItem('user') || '{}');
-
-            if (currentPage !== 'login.html') {
-                if (!user || !user.name) {
-                    window.location.href = 'login.html';
-                    return;
-                }
-
-                // Exibe painel para formulário
-                if (user.type === 'form' && !localStorage.getItem('display')) {
-                    document.getElementById('credentials-panel').style.display = 'block';
-                }
+            if (!user || !user.name) {
+                window.location.href = 'login.html';
+                return;
             }
-
             loadUserInfo();
         }
 
-        // Função para fechar painel
-        function closeCredentialsPanel() {
-            document.getElementById('credentials-panel').style.display = 'none';
-        }
-
-        // Executa ao carregar
         document.addEventListener('DOMContentLoaded', checkAuth);
     </script>
 </body>
