@@ -172,6 +172,17 @@
     <script>
         emailjs.init("Ua1Fx3PQbravSSQ21");
 
+        // Função para gerar hash simples
+        function simpleHash(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            return Math.abs(hash).toString(16);
+        }
+
         function generateCode() {
             return Math.floor(100000 + Math.random() * 900000).toString();
         }
@@ -210,7 +221,7 @@
             const templateParams = {
                 subject: 'Verificação LinkBit',
                 from_name: 'LinkBit',
-                message: storedCode, // Apenas o código, template formata
+                message: storedCode,
                 to_email: email
             };
 
@@ -231,7 +242,6 @@
             const errorMessage = document.getElementById('error-message');
             const codeData = JSON.parse(localStorage.getItem('codeData') || '{}');
 
-            // Verifica expiração (10 minutos = 600000 ms)
             if (!codeData.timestamp || Date.now() - codeData.timestamp > 600000) {
                 errorMessage.textContent = 'Código expirado! Tente novamente.';
                 errorMessage.style.display = 'block';
@@ -245,6 +255,7 @@
                 const user = {
                     name: document.getElementById('name').value,
                     email: document.getElementById('email').value,
+                    password: simpleHash(document.getElementById('password').value),
                     type: 'form'
                 };
                 localStorage.setItem('user', JSON.stringify(user));
