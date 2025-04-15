@@ -6,6 +6,7 @@
     <title>LinkBit - Feed</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
+        /* Mesma CSS da última versão */
         * {
             margin: 0;
             padding: 0;
@@ -481,14 +482,12 @@
     </div>
 
     <script type="module">
-        // Import Firebase SDKs
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-analytics.js";
         import { getFirestore, collection, addDoc, getDocs, query, orderBy, deleteDoc, doc, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-storage.js";
         import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
-        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyA5m65LSJQDKFTdbl_iB71URRIhXWYhUcQ",
             authDomain: "chat-alpha-e-beta.firebaseapp.com",
@@ -499,14 +498,12 @@
             measurementId: "G-8HXRW3F6Q8"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const analytics = getAnalytics(app);
         const db = getFirestore(app);
         const storage = getStorage(app);
         const auth = getAuth(app);
 
-        // Função para carregar posts
         async function loadPosts() {
             console.log('Iniciando loadPosts');
             const feed = document.querySelector('.feed');
@@ -533,6 +530,8 @@
                     display = JSON.parse(localStorage.getItem('display') || '{}');
                 } catch (e) {
                     console.error('Erro ao parsear localStorage em loadPosts:', e);
+                    localUser = { name: 'Convidado' };
+                    display = {};
                 }
                 const currentAuthor = display.name || localUser.name || 'Convidado';
                 console.log('Autor atual:', currentAuthor);
@@ -585,7 +584,6 @@
                     feed.innerHTML += postHTML;
                 });
 
-                // Adicionar eventos aos botões de deletar
                 document.querySelectorAll('.delete-post-btn').forEach(button => {
                     button.addEventListener('click', async () => {
                         const postId = button.dataset.postId;
@@ -598,7 +596,6 @@
             }
         }
 
-        // Função para deletar post
         async function deletePost(postId) {
             console.log('Deletando post:', postId);
             if (!confirm('Tem certeza que deseja deletar este post?')) {
@@ -614,7 +611,6 @@
             }
         }
 
-        // Função para criar um post
         async function createPost(title, text, media = null) {
             console.log('Iniciando createPost:', { title, text, media });
             try {
@@ -662,7 +658,6 @@
             }
         }
 
-        // Função para upload de mídia
         async function uploadMedia(file) {
             console.log('Iniciando uploadMedia:', file.name);
             try {
@@ -674,14 +669,10 @@
                 return { type, url, embed: '' };
             } catch (error) {
                 console.error('Erro em uploadMedia:', error);
-                if (error.code === 'storage/unauthorized' || error.message.includes('cors')) {
-                    throw new Error('Falha no upload: Problema de configuração do Storage (CORS ou permissões). Tente usar uma URL ou envie sem mídia.');
-                }
                 throw new Error('Erro ao fazer upload: ' + error.message);
             }
         }
 
-        // Função para processar URL de mídia
         function processVideoUrl(url) {
             console.log('Iniciando processVideoUrl:', url);
             try {
@@ -723,7 +714,6 @@
             }
         }
 
-        // Funções do modal
         function openPostModal() {
             console.log('Abrindo modal');
             const modal = document.getElementById('postModal');
@@ -752,7 +742,6 @@
             }
         }
 
-        // Configurar eventos do modal
         function setupModalEvents() {
             console.log('Configurando eventos do modal');
             const imageBtn = document.getElementById('imageBtn');
@@ -875,7 +864,6 @@
             });
         }
 
-        // Funções do usuário
         function getAvatarColor(name) {
             console.log('Gerando cor do avatar para:', name);
             const colors = ['#6e8efb', '#a777e3', '#ff6b6b', '#4CAF50', '#FF9800', '#9C27B0'];
@@ -900,6 +888,8 @@
                 console.log('Dados do usuário:', { user, display });
             } catch (e) {
                 console.error('Erro ao parsear localStorage em loadUserInfo:', e);
+                user = { name: 'Convidado' };
+                display = {};
             }
 
             const name = display.name || user.name || 'Convidado';
@@ -922,11 +912,6 @@
                 avatarPlaceholder.style.display = 'flex';
                 avatarPlaceholder.style.background = getAvatarColor(name);
                 avatarPlaceholder.textContent = name.charAt(0);
-            }
-
-            if (user.type === 'form' && !display.name && !display.picture) {
-                console.log('Exibindo iframe de credenciais');
-                document.getElementById('iframe-container').style.display = 'block';
             }
         }
 
@@ -966,7 +951,6 @@
             }
         }
 
-        // Configurar eventos da sidebar
         function setupSidebarEvents() {
             console.log('Configurando eventos da sidebar');
             document.getElementById('createPostBtn').addEventListener('click', () => {
@@ -987,7 +971,6 @@
             });
         }
 
-        // Verificar autenticação Firebase
         onAuthStateChanged(auth, async (user) => {
             console.log('Estado de autenticação:', user ? `Logado (${user.uid})` : 'Deslogado');
             if (!user) {
@@ -1006,18 +989,7 @@
                 loadUserInfo();
                 await loadPosts();
                 setupSidebarEvents();
-            }
-        });
-
-        // Inicializar eventos
-        document.addEventListener('DOMContentLoaded', async () => {
-            console.log('Página carregada');
-            setupModalEvents();
-            if (checkAuth()) {
-                console.log('Iniciando carga inicial');
-                loadUserInfo();
-                await loadPosts();
-                setupSidebarEvents();
+                setupModalEvents();
             }
         });
     </script>
