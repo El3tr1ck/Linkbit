@@ -515,7 +515,7 @@
                 const snapshot = await getDocs(q);
                 console.log('Snapshot recebido:', snapshot.size, 'posts');
 
-                feed.innerHTML = ''; // Limpar placeholder
+                feed.innerHTML = '';
 
                 if (snapshot.empty) {
                     console.log('Nenhum post encontrado');
@@ -524,8 +524,14 @@
                 }
 
                 const currentUser = auth.currentUser;
-                const localUser = JSON.parse(localStorage.getItem('user') || '{}');
-                const display = JSON.parse(localStorage.getItem('display') || '{}');
+                let localUser = {};
+                let display = {};
+                try {
+                    localUser = JSON.parse(localStorage.getItem('user') || '{}');
+                    display = JSON.parse(localStorage.getItem('display') || '{}');
+                } catch (e) {
+                    console.error('Erro ao parsear localStorage em loadPosts:', e);
+                }
                 const currentAuthor = display.name || localUser.name || 'Convidado';
                 console.log('Autor atual:', currentAuthor);
 
@@ -535,7 +541,11 @@
 
                     // Escapar HTML para evitar XSS
                     const escapeHTML = str => str.replace(/[&<>"']/g, m => ({
-                        '&': '&', '<': '<', '>': '>', '"': '"', "'": '''
+                        '&': '&amp;',
+                        '<': '&lt;',
+                        '>': '&gt;',
+                        '"': '&quot;',
+                        "'": '&apos;'
                     })[m]);
 
                     // Processar menções
@@ -554,7 +564,7 @@
                         }
                     }
 
-                    // Botão de deletar (só para o autor)
+                    // Botão de deletar
                     let deleteButton = '';
                     if (post.author === currentAuthor) {
                         deleteButton = `<button onclick="deletePost('${doc.id}')">Deletar</button>`;
@@ -611,7 +621,7 @@
                     localUser = JSON.parse(localStorage.getItem('user') || '{}');
                     display = JSON.parse(localStorage.getItem('display') || '{}');
                 } catch (e) {
-                    console.error('Erro ao parsear localStorage:', e);
+                    console.error('Erro ao parsear localStorage em createPost:', e);
                     localUser = { name: 'Convidado' };
                     display = {};
                 }
@@ -808,7 +818,6 @@
                     } catch (error) {
                         console.error('Falha no upload:', error);
                         alert(error.message);
-                        // Prosseguir sem mídia
                     }
                 } else if (urlInput.value.trim()) {
                     console.log('Processando URL:', urlInput.value);
@@ -839,7 +848,6 @@
                 }
             });
 
-            // Detectar menções @usuário
             document.getElementById('postText').addEventListener('input', function () {
                 console.log('Detectando menções');
                 const text = this.value;
@@ -855,7 +863,6 @@
                     .join('');
             });
 
-            // Fechar modal ao clicar fora
             document.getElementById('postModal').addEventListener('click', function (e) {
                 if (e.target === this) {
                     closePostModal();
@@ -863,7 +870,7 @@
             });
         }
 
-        // Funções existentes
+        // Funções do usuário
         function getAvatarColor(name) {
             console.log('Gerando cor do avatar para:', name);
             const colors = ['#6e8efb', '#a777e3', '#ff6b6b', '#4CAF50', '#FF9800', '#9C27B0'];
@@ -887,7 +894,7 @@
                 display = JSON.parse(localStorage.getItem('display') || '{}');
                 console.log('Dados do usuário:', { user, display });
             } catch (e) {
-                console.error('Erro ao parsear localStorage:', e);
+                console.error('Erro ao parsear localStorage em loadUserInfo:', e);
             }
 
             const name = display.name || user.name || 'Convidado';
@@ -946,7 +953,6 @@
                     window.location.href = '/login';
                     return false;
                 }
-                loadUserInfo();
                 return true;
             } catch (e) {
                 console.error('Erro em checkAuth:', e);
@@ -970,7 +976,8 @@
                 }
             }
             if (checkAuth()) {
-                console.log('Autenticação válida, carregando posts');
+                console.log('Autenticação válida, carregando dados');
+                loadUserInfo();
                 await loadPosts();
             }
         });
@@ -980,7 +987,8 @@
             console.log('Página carregada');
             setupModalEvents();
             if (checkAuth()) {
-                console.log('Iniciando carga inicial de posts');
+                console.log('Iniciando carga inicial');
+                loadUserInfo();
                 await loadPosts();
             }
         });
