@@ -6,7 +6,6 @@
     <title>LinkBit - Perfil</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
-        /* Mesma CSS fornecida anteriormente, sem alterações */
         * {
             margin: 0;
             padding: 0;
@@ -308,7 +307,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-        import { getFirestore, collection, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+        import { getFirestore, collection, query, where, getDocs, orderBy, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -335,9 +334,9 @@
             return colors[Math.abs(hash) % colors.length];
         }
 
-        function formatDate(dateStr) {
-            console.log('Formatando data:', dateStr);
-            const date = new Date(dateStr);
+        function formatDate(timestamp) {
+            console.log('Formatando data:', timestamp);
+            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
             const options = { day: 'numeric', month: 'long', year: 'numeric' };
             return date.toLocaleDateString('pt-BR', options);
         }
@@ -355,36 +354,47 @@
 
             let localUser = {};
             let display = {};
+            let currentUserName = '';
             try {
                 localUser = JSON.parse(localStorage.getItem('user') || '{}');
                 display = JSON.parse(localStorage.getItem('display') || '{}');
-                console.log('Dados locais:', { localUser, display });
+                currentUserName = display.name || localUser.name || 'Convidado';
+                console.log('Dados locais:', { localUser, display, currentUserName });
             } catch (e) {
                 console.error('Erro ao parsear localStorage:', e);
+                currentUserName = 'Convidado';
             }
 
-            const currentUserName = display.name || localUser.name || 'Convidado';
-            let profileData;
+            let profileData = {
+                name: author || currentUserName,
+                bio: 'Sem bio definida',
+                picture: '',
+                createdAt: new Date()
+            };
 
-            if (author && author !== currentUserName) {
-                console.log('Carregando perfil de outro usuário:', author);
-                profileData = { name: author, bio: 'Bio não disponível', createdAt: new Date().toISOString() };
-                editBioBtn.style.display = 'none';
-            } else {
-                console.log('Carregando perfil do usuário atual');
-                profileData = {
-                    name: currentUserName,
-                    bio: display.bio || 'Sem bio definida',
-                    picture: display.picture || localUser.picture,
-                    createdAt: localUser.createdAt || new Date().toISOString(),
-                    type: localUser.type
-                };
-                editBioBtn.style.display = 'block';
+            try {
+                // Buscar usuário no Firestore pelo nome
+                const userQuery = query(collection(db, 'users'), where('name', '==', author || currentUserName));
+                const userSnapshot = await getDocs(userQuery);
+                if (!userSnapshot.empty) {
+                    const userData = userSnapshot.docs[0].data();
+                    profileData = {
+                        name: userData.name,
+                        bio: userData.bio || 'Sem bio definida',
+                        picture: userData.picture || '',
+                        createdAt: userData.createdAt || new Date()
+                    };
+                    console.log('Dados do Firestore:', profileData);
+                } else {
+                    console.log('Usuário não encontrado no Firestore');
+                }
+            } catch (error) {
+                console.error('Erro ao buscar perfil no Firestore:', error);
             }
 
             profileName.textContent = profileData.name;
 
-            if (profileData.picture && (profileData.type === 'google' || author === currentUserName)) {
+            if (profileData.picture) {
                 console.log('Usando foto:', profileData.picture);
                 profilePicture.src = profileData.picture;
                 profilePicture.style.display = 'block';
@@ -401,6 +411,9 @@
             document.getElementById('bio-input').value = profileData.bio === 'Sem bio definida' ? '' : profileData.bio;
 
             joinDate.textContent = `Entrou em ${formatDate(profileData.createdAt)}`;
+
+            // Mostrar botão de edição apenas para o próprio usuário
+            editBioBtn.style.display = (author === currentUserName || !author) ? 'block' : 'none';
 
             await loadPosts(profileData.name);
         }
@@ -498,7 +511,7 @@
             }
         }
 
-        function editBio() {
+        async function editBio() {
             console.log('Editando bio');
             document.getElementById('bio-text').style.display = 'none';
             document.getElementById('bio-edit').style.display = 'flex';
@@ -506,12 +519,24 @@
             document.getElementById('bio-input').focus();
         }
 
-        function saveBio() {
+        async function saveBio() {
             console.log('Salvando bio');
             const bioInput = document.getElementById('bio-input').value.trim();
             const display = JSON.parse(localStorage.getItem('display') || '{}');
             display.bio = bioInput || 'Sem bio definida';
             localStorage.setItem('display', JSON.stringify(display));
+
+            // Salvar no Firestore
+            try {
+                const user = auth.currentUser;
+                if (user) {
+                    await setDoc(doc(db, 'users', user.uid), { bio: display.bio }, { merge: true });
+                    console.log('Bio salva no Firestore');
+                }
+            } catch (error) {
+                console.error('Erro ao salvar bio no Firestore:', error);
+            }
+
             document.getElementById('bio-text').textContent = display.bio;
             cancelBio();
         }
