@@ -6,6 +6,7 @@
     <title>LinkBit - Perfil</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
+        /* Mesma CSS fornecida anteriormente, sem alterações */
         * {
             margin: 0;
             padding: 0;
@@ -410,25 +411,50 @@
             postsTab.innerHTML = 'Carregando posts...';
 
             try {
-                const q = query(
+                // Consulta 1: Posts do autor
+                const q1 = query(
                     collection(db, 'posts'),
                     where('author', '==', author),
                     orderBy('createdAt', 'desc')
                 );
-                console.log('Executando consulta Firestore');
-                const snapshot = await getDocs(q);
-                console.log('Snapshot recebido:', snapshot.size, 'posts');
+
+                // Consulta 2: Todos os posts (para buscar menções)
+                const q2 = query(
+                    collection(db, 'posts'),
+                    orderBy('createdAt', 'desc')
+                );
+
+                // Executar consultas em paralelo
+                const [snapshot1, snapshot2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+                console.log('Snapshots recebidos:', snapshot1.size, 'posts do autor,', snapshot2.size, 'posts totais');
+
+                const posts = new Map(); // Usar Map para evitar duplicatas
+
+                // Processar posts do autor
+                snapshot1.forEach(doc => {
+                    posts.set(doc.id, { id: doc.id, ...doc.data() });
+                });
+
+                // Processar posts com menções
+                snapshot2.forEach(doc => {
+                    const post = doc.data();
+                    if (post.text.includes(`@${author}`) && !posts.has(doc.id)) {
+                        posts.set(doc.id, { id: doc.id, ...post });
+                    }
+                });
+
+                // Converter Map para array e ordenar por createdAt
+                const sortedPosts = Array.from(posts.values()).sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
 
                 postsTab.innerHTML = '';
 
-                if (snapshot.empty) {
+                if (sortedPosts.length === 0) {
                     console.log('Nenhum post encontrado');
-                    postsTab.innerHTML = 'Nenhum post ainda.';
+                    postsTab.innerHTML = 'Nenhum post ou menção encontrado.';
                     return;
                 }
 
-                snapshot.forEach(doc => {
-                    const post = doc.data();
+                sortedPosts.forEach(post => {
                     console.log('Post carregado:', post);
 
                     const escapeHTML = str => str.replace(/[&<>"']/g, m => ({
@@ -468,7 +494,7 @@
                 });
             } catch (error) {
                 console.error('Erro ao carregar posts:', error);
-                postsTab.innerHTML = 'Erro ao carregar posts: ' + error.message;
+                postsTab.innerHTML = 'Não foi possível carregar os posts. Tente novamente mais tarde.';
             }
         }
 
