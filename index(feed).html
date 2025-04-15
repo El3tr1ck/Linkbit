@@ -236,8 +236,6 @@
             border: none;
             border-radius: 8px;
             cursor: pointer;
-PRS: 8px;
-            cursor: pointer;
             width: 100%;
         }
 
@@ -410,7 +408,6 @@ PRS: 8px;
                 let localUser = {};
                 let display = {};
 
-                // Tentar carregar localStorage com segurança
                 try {
                     localUser = JSON.parse(localStorage.getItem('user') || '{}');
                     display = JSON.parse(localStorage.getItem('display') || '{}');
@@ -420,20 +417,21 @@ PRS: 8px;
                     display = {};
                 }
 
-                // Garantir autenticação
                 if (!user) {
                     console.log('Nenhum usuário logado, tentando login anônimo');
                     try {
-                        await signInAnonymously(auth);
-                        user = auth.currentUser;
+                        const credential = await signInAnonymously(auth);
+                        user = credential.user;
                         console.log('Login anônimo bem-sucedido:', user.uid);
                     } catch (authError) {
                         console.error('Erro no login anônimo:', authError);
+                        if (authError.code === 'auth/configuration-not-found') {
+                            throw new Error('Autenticação anônima não está habilitada no Firebase. Ative no Firebase Console.');
+                        }
                         throw new Error('Falha na autenticação: ' + authError.message);
                     }
                 }
 
-                // Montar o post
                 const post = {
                     title: title ? String(title).substring(0, 100) : '',
                     text: String(text).substring(0, 280),
@@ -444,7 +442,6 @@ PRS: 8px;
                 };
                 console.log('Post a ser salvo:', post);
 
-                // Salvar no Firestore
                 const docRef = await addDoc(collection(db, 'posts'), post);
                 console.log('Post criado com ID:', docRef.id);
                 return docRef.id;
@@ -466,7 +463,10 @@ PRS: 8px;
                 return { type, url, embed: '' };
             } catch (error) {
                 console.error('Erro em uploadMedia:', error);
-                throw error;
+                if (error.code === 'storage/unauthorized' || error.message.includes('cors')) {
+                    throw new Error('Falha no upload: Problema de configuração do Storage (CORS ou permissões). Tente usar uma URL ou envie sem mídia.');
+                }
+                throw new Error('Erro ao fazer upload: ' + error.message);
             }
         }
 
@@ -590,24 +590,24 @@ PRS: 8px;
 
                 let media = null;
                 if (uploadInput.files[0]) {
-                    console.log('Processando upload:', uploadInput.files[0].name);
+                    console.log('Tentando upload:', uploadInput.files[0].name);
                     try {
                         media = await uploadMedia(uploadInput.files[0]);
                         console.log('Upload bem-sucedido:', media);
                     } catch (error) {
                         console.error('Falha no upload:', error);
-                        alert('Erro ao fazer upload: ' + error.message);
-                        return;
+                        alert(error.message);
+                        // Prosseguir sem mídia
                     }
                 } else if (urlInput.value.trim()) {
                     console.log('Processando URL:', urlInput.value);
                     media = processVideoUrl(urlInput.value);
                     if (!media) {
                         console.log('URL inválida');
-                        alert('URL inválida ou não suportada!');
-                        return;
+                        alert('URL inválida ou não suportada. O post será criado sem mídia.');
+                    } else {
+                        console.log('URL processada:', media);
                     }
-                    console.log('URL processada:', media);
                 }
 
                 console.log('Preparando para criar post');
