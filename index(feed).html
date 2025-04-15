@@ -30,6 +30,8 @@
         .main-content {
             flex: 1;
             padding: 20px;
+            display: flex;
+            justify-content: center;
         }
 
         .feed {
@@ -37,6 +39,8 @@
             border-radius: 15px;
             padding: 20px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
         }
 
         .feed-placeholder {
@@ -51,7 +55,6 @@
             padding: 15px;
             margin-bottom: 15px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            max-width: 500px;
         }
 
         .post-title {
@@ -395,7 +398,7 @@
                 height: 80px;
             }
 
-            .post {
+            .feed {
                 max-width: 100%;
             }
         }
@@ -434,7 +437,7 @@
                 <i class="fas fa-plus"></i>
                 <span>Criar Postagem</span>
             </button>
-            <button onclick="logout()">
+            <button id="logoutBtn">
                 <i class="fas fa-sign-out-alt"></i>
                 <span>Sair</span>
             </button>
@@ -442,11 +445,11 @@
                 <i class="fas fa-server"></i>
                 <span>Canal</span>
             </button>
-            <button onclick="goToCredentials()">
+            <button id="credentialsBtn">
                 <i class="fas fa-id-card"></i>
                 <span>Credenciais</span>
             </button>
-            <button onclick="goToProfile()">
+            <button id="profileBtn">
                 <i class="fas fa-user"></i>
                 <span>Perfil</span>
             </button>
@@ -523,7 +526,6 @@
                     return;
                 }
 
-                const currentUser = auth.currentUser;
                 let localUser = {};
                 let display = {};
                 try {
@@ -539,22 +541,19 @@
                     const post = doc.data();
                     console.log('Post carregado:', post);
 
-                    // Escapar HTML para evitar XSS
                     const escapeHTML = str => str.replace(/[&<>"']/g, m => ({
-                        '&': '&amp;',
-                        '<': '&lt;',
-                        '>': '&gt;',
-                        '"': '&quot;',
-                        "'": '&apos;'
+                        '&': '&',
+                        '<': '<',
+                        '>': '>',
+                        '"': '"',
+                        "'": '''
                     })[m]);
 
-                    // Processar menções
                     const textWithMentions = escapeHTML(post.text).replace(
                         /@(\w+)/g,
                         '<span class="mention">@$1</span>'
                     );
 
-                    // Processar mídia
                     let mediaHTML = '';
                     if (post.media && post.media.url) {
                         if (post.media.type === 'image' || post.media.type === 'gif') {
@@ -564,13 +563,11 @@
                         }
                     }
 
-                    // Botão de deletar
                     let deleteButton = '';
                     if (post.author === currentAuthor) {
-                        deleteButton = `<button onclick="deletePost('${doc.id}')">Deletar</button>`;
+                        deleteButton = `<button class="delete-post-btn" data-post-id="${doc.id}">Deletar</button>`;
                     }
 
-                    // Criar HTML do post
                     const postHTML = `
                         <div class="post">
                             ${post.title ? `<div class="post-title">${escapeHTML(post.title)}</div>` : ''}
@@ -586,6 +583,14 @@
                         </div>
                     `;
                     feed.innerHTML += postHTML;
+                });
+
+                // Adicionar eventos aos botões de deletar
+                document.querySelectorAll('.delete-post-btn').forEach(button => {
+                    button.addEventListener('click', async () => {
+                        const postId = button.dataset.postId;
+                        await deletePost(postId);
+                    });
                 });
             } catch (error) {
                 console.error('Erro ao carregar posts:', error);
@@ -961,6 +966,27 @@
             }
         }
 
+        // Configurar eventos da sidebar
+        function setupSidebarEvents() {
+            console.log('Configurando eventos da sidebar');
+            document.getElementById('createPostBtn').addEventListener('click', () => {
+                console.log('Botão Criar Postagem clicado');
+                openPostModal();
+            });
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                console.log('Botão Sair clicado');
+                logout();
+            });
+            document.getElementById('credentialsBtn').addEventListener('click', () => {
+                console.log('Botão Credenciais clicado');
+                goToCredentials();
+            });
+            document.getElementById('profileBtn').addEventListener('click', () => {
+                console.log('Botão Perfil clicado');
+                goToProfile();
+            });
+        }
+
         // Verificar autenticação Firebase
         onAuthStateChanged(auth, async (user) => {
             console.log('Estado de autenticação:', user ? `Logado (${user.uid})` : 'Deslogado');
@@ -979,6 +1005,7 @@
                 console.log('Autenticação válida, carregando dados');
                 loadUserInfo();
                 await loadPosts();
+                setupSidebarEvents();
             }
         });
 
@@ -990,6 +1017,7 @@
                 console.log('Iniciando carga inicial');
                 loadUserInfo();
                 await loadPosts();
+                setupSidebarEvents();
             }
         });
     </script>
