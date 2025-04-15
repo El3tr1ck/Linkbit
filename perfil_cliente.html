@@ -190,7 +190,61 @@
             min-height: 100px;
             color: #666;
             font-size: 16px;
-            text-align: center;
+            text-align: left;
+        }
+
+        .post {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .post-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .post-text {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 10px;
+        }
+
+        .post-author {
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .post-author a {
+            color: #6e8efb;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .post-author a:hover {
+            text-decoration: underline;
+        }
+
+        .post-media img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .post-media iframe {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .mention {
+            color: #6e8efb;
+            text-decoration: none;
+            font-weight: 600;
         }
 
         @media (max-width: 600px) {
@@ -229,31 +283,49 @@
         <div class="profile-header">
             <img id="profile-picture" class="profile-picture">
             <div id="avatar-placeholder" class="avatar-placeholder"></div>
-            <h1 id="profile-name" class="profile-name">Nome Atual</h1>
+            <h1 id="profile-name" class="profile-name">Carregando...</h1>
         </div>
         <div class="bio-section">
             <p id="bio-text" class="bio-text">Sem bio definida</p>
             <div id="bio-edit" class="bio-edit">
                 <textarea id="bio-input" maxlength="150" placeholder="Escreva sua bio..."></textarea>
                 <div class="bio-edit-buttons">
-                    <button class="bio-save" onclick="saveBio()">Salvar</button>
-                    <button class="bio-cancel" onclick="cancelBio()">Cancelar</button>
+                    <button id="bio-save" class="bio-save">Salvar</button>
+                    <button id="bio-cancel" class="bio-cancel">Cancelar</button>
                 </div>
             </div>
-            <button id="edit-bio-btn" class="edit-bio-btn" onclick="editBio()">Editar Bio</button>
+            <button id="edit-bio-btn" class="edit-bio-btn">Editar Bio</button>
         </div>
         <p id="join-date" class="join-date">Entrou em [Data]</p>
         <div class="tabs">
-            <button class="tab-btn active" onclick="showTab('posts')">Posts</button>
-            <button class="tab-btn" onclick="showTab('reposts')">Republicados</button>
+            <button id="posts-tab" class="tab-btn active">Posts</button>
+            <button id="reposts-tab" class="tab-btn">Republicados</button>
         </div>
-        <div id="posts" class="tab-content">Seus posts aparecerão aqui em breve!</div>
+        <div id="posts" class="tab-content">Carregando posts...</div>
         <div id="reposts" class="tab-content" style="display: none;">Seus posts republicados aparecerão aqui em breve!</div>
     </div>
 
-    <script>
-        // Função para gerar cor de avatar
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+        import { getFirestore, collection, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA5m65LSJQDKFTdbl_iB71URRIhXWYhUcQ",
+            authDomain: "chat-alpha-e-beta.firebaseapp.com",
+            projectId: "chat-alpha-e-beta",
+            storageBucket: "chat-alpha-e-beta.firebasestorage.app",
+            messagingSenderId: "873372870268",
+            appId: "1:873372870268:web:74a0711b5f3840dc350bf9",
+            measurementId: "G-8HXRW3F6Q8"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
         function getAvatarColor(name) {
+            console.log('Gerando cor do avatar para:', name);
             const colors = ['#6e8efb', '#a777e3', '#ff6b6b', '#4CAF50', '#FF9800', '#9C27B0'];
             let hash = 0;
             for (let i = 0; i < name.length; i++) {
@@ -262,59 +334,154 @@
             return colors[Math.abs(hash) % colors.length];
         }
 
-        // Função para formatar data
         function formatDate(dateStr) {
+            console.log('Formatando data:', dateStr);
             const date = new Date(dateStr);
             const options = { day: 'numeric', month: 'long', year: 'numeric' };
             return date.toLocaleDateString('pt-BR', options);
         }
 
-        // Função para carregar informações do perfil
-        function loadProfile() {
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            const display = JSON.parse(localStorage.getItem('display') || '{}');
+        async function loadProfile() {
+            console.log('Iniciando loadProfile');
+            const urlParams = new URLSearchParams(window.location.search);
+            const author = urlParams.get('author');
             const profileName = document.getElementById('profile-name');
             const profilePicture = document.getElementById('profile-picture');
             const avatarPlaceholder = document.getElementById('avatar-placeholder');
             const bioText = document.getElementById('bio-text');
             const joinDate = document.getElementById('join-date');
+            const editBioBtn = document.getElementById('edit-bio-btn');
 
-            const name = display.name || user.name || 'Amigo';
-            profileName.textContent = name;
+            let localUser = {};
+            let display = {};
+            try {
+                localUser = JSON.parse(localStorage.getItem('user') || '{}');
+                display = JSON.parse(localStorage.getItem('display') || '{}');
+                console.log('Dados locais:', { localUser, display });
+            } catch (e) {
+                console.error('Erro ao parsear localStorage:', e);
+            }
 
-            if (display.picture) {
-                profilePicture.src = display.picture;
-                profilePicture.style.display = 'block';
-                avatarPlaceholder.style.display = 'none';
-            } else if (user.picture && user.type === 'google') {
-                profilePicture.src = user.picture;
+            const currentUserName = display.name || localUser.name || 'Convidado';
+            let profileData;
+
+            if (author && author !== currentUserName) {
+                console.log('Carregando perfil de outro usuário:', author);
+                profileData = { name: author, bio: 'Bio não disponível', createdAt: new Date().toISOString() };
+                editBioBtn.style.display = 'none';
+            } else {
+                console.log('Carregando perfil do usuário atual');
+                profileData = {
+                    name: currentUserName,
+                    bio: display.bio || 'Sem bio definida',
+                    picture: display.picture || localUser.picture,
+                    createdAt: localUser.createdAt || new Date().toISOString(),
+                    type: localUser.type
+                };
+                editBioBtn.style.display = 'block';
+            }
+
+            profileName.textContent = profileData.name;
+
+            if (profileData.picture && (profileData.type === 'google' || author === currentUserName)) {
+                console.log('Usando foto:', profileData.picture);
+                profilePicture.src = profileData.picture;
                 profilePicture.style.display = 'block';
                 avatarPlaceholder.style.display = 'none';
             } else {
+                console.log('Usando avatar para:', profileData.name);
                 profilePicture.style.display = 'none';
                 avatarPlaceholder.style.display = 'flex';
-                avatarPlaceholder.style.background = getAvatarColor(name);
-                avatarPlaceholder.textContent = name.charAt(0);
+                avatarPlaceholder.style.background = getAvatarColor(profileData.name);
+                avatarPlaceholder.textContent = profileData.name.charAt(0);
             }
 
-            const bio = display.bio || 'Sem bio definida';
-            bioText.textContent = bio;
-            document.getElementById('bio-input').value = bio === 'Sem bio definida' ? '' : bio;
+            bioText.textContent = profileData.bio;
+            document.getElementById('bio-input').value = profileData.bio === 'Sem bio definida' ? '' : profileData.bio;
 
-            const createdAt = user.createdAt || new Date().toISOString();
-            joinDate.textContent = `Entrou em ${formatDate(createdAt)}`;
+            joinDate.textContent = `Entrou em ${formatDate(profileData.createdAt)}`;
+
+            await loadPosts(profileData.name);
         }
 
-        // Função para editar bio
+        async function loadPosts(author) {
+            console.log('Iniciando loadPosts para:', author);
+            const postsTab = document.getElementById('posts');
+            postsTab.innerHTML = 'Carregando posts...';
+
+            try {
+                const q = query(
+                    collection(db, 'posts'),
+                    where('author', '==', author),
+                    orderBy('createdAt', 'desc')
+                );
+                console.log('Executando consulta Firestore');
+                const snapshot = await getDocs(q);
+                console.log('Snapshot recebido:', snapshot.size, 'posts');
+
+                postsTab.innerHTML = '';
+
+                if (snapshot.empty) {
+                    console.log('Nenhum post encontrado');
+                    postsTab.innerHTML = 'Nenhum post ainda.';
+                    return;
+                }
+
+                snapshot.forEach(doc => {
+                    const post = doc.data();
+                    console.log('Post carregado:', post);
+
+                    const escapeHTML = str => str.replace(/[&<>"']/g, m => ({
+                        '&': '&',
+                        '<': '<',
+                        '>': '>',
+                        '"': '"',
+                        "'": '''
+                    })[m]);
+
+                    const textWithMentions = escapeHTML(post.text).replace(
+                        /@(\w+)/g,
+                        '<span class="mention">@$1</span>'
+                    );
+
+                    let mediaHTML = '';
+                    if (post.media && post.media.url) {
+                        if (post.media.type === 'image' || post.media.type === 'gif') {
+                            mediaHTML = `<div class="post-media"><img src="${escapeHTML(post.media.url)}" alt="Imagem do post"></div>`;
+                        } else if (post.media.type === 'video' && post.media.embed) {
+                            mediaHTML = `<div class="post-media">${post.media.embed}</div>`;
+                        }
+                    }
+
+                    const postHTML = `
+                        <div class="post">
+                            ${post.title ? `<div class="post-title">${escapeHTML(post.title)}</div>` : ''}
+                            <div class="post-text">${textWithMentions}</div>
+                            ${mediaHTML}
+                            <div class="post-author">
+                                Por <a href="/perfil?author=${encodeURIComponent(post.author)}">${escapeHTML(post.author)}</a>
+                                em ${post.createdAt.toDate().toLocaleString()}
+                            </div>
+                        </div>
+                    `;
+                    postsTab.innerHTML += postHTML;
+                });
+            } catch (error) {
+                console.error('Erro ao carregar posts:', error);
+                postsTab.innerHTML = 'Erro ao carregar posts: ' + error.message;
+            }
+        }
+
         function editBio() {
+            console.log('Editando bio');
             document.getElementById('bio-text').style.display = 'none';
             document.getElementById('bio-edit').style.display = 'flex';
             document.getElementById('edit-bio-btn').style.display = 'none';
             document.getElementById('bio-input').focus();
         }
 
-        // Função para salvar bio
         function saveBio() {
+            console.log('Salvando bio');
             const bioInput = document.getElementById('bio-input').value.trim();
             const display = JSON.parse(localStorage.getItem('display') || '{}');
             display.bio = bioInput || 'Sem bio definida';
@@ -323,8 +490,8 @@
             cancelBio();
         }
 
-        // Função para cancelar edição
         function cancelBio() {
+            console.log('Cancelando edição de bio');
             document.getElementById('bio-text').style.display = 'block';
             document.getElementById('bio-edit').style.display = 'none';
             document.getElementById('edit-bio-btn').style.display = 'block';
@@ -332,25 +499,56 @@
             document.getElementById('bio-input').value = display.bio === 'Sem bio definida' ? '' : display.bio;
         }
 
-        // Função para alternar abas
         function showTab(tab) {
+            console.log('Alternando para aba:', tab);
             document.getElementById('posts').style.display = tab === 'posts' ? 'block' : 'none';
             document.getElementById('reposts').style.display = tab === 'reposts' ? 'block' : 'none';
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelector(`.tab-btn[onclick="showTab('${tab}')"]`).classList.add('active');
+            document.getElementById(`${tab}-tab`).classList.add('active');
         }
 
-        // Verifica autenticação
         function checkAuth() {
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            if (!user || !user.name) {
-                window.location.href = 'login.html';
-                return;
+            console.log('Verificando autenticação');
+            try {
+                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                console.log('Usuário localStorage:', user);
+                if (!user || !user.name) {
+                    console.log('Sem usuário, redirecionando para /login');
+                    window.location.href = '/login';
+                    return false;
+                }
+                return true;
+            } catch (e) {
+                console.error('Erro em checkAuth:', e);
+                window.location.href = '/login';
+                return false;
             }
-            loadProfile();
         }
 
-        document.addEventListener('DOMContentLoaded', checkAuth);
+        onAuthStateChanged(auth, async (user) => {
+            console.log('Estado de autenticação:', user ? `Logado (${user.uid})` : 'Deslogado');
+            if (!user) {
+                console.log('Sem usuário Firebase, tentando login anônimo');
+                try {
+                    await signInAnonymously(auth);
+                    console.log('Login anônimo realizado');
+                } catch (error) {
+                    console.error('Erro no login anônimo:', error);
+                    window.location.href = '/login';
+                    return;
+                }
+            }
+            if (checkAuth()) {
+                console.log('Autenticação válida, carregando perfil');
+                await loadProfile();
+
+                document.getElementById('bio-save').addEventListener('click', saveBio);
+                document.getElementById('bio-cancel').addEventListener('click', cancelBio);
+                document.getElementById('edit-bio-btn').addEventListener('click', editBio);
+                document.getElementById('posts-tab').addEventListener('click', () => showTab('posts'));
+                document.getElementById('reposts-tab').addEventListener('click', () => showTab('reposts'));
+            }
+        });
     </script>
 </body>
 </html>
