@@ -51,7 +51,7 @@
             padding: 15px;
             margin-bottom: 15px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            max-width: 500px; /* Quadrado */
+            max-width: 500px;
         }
 
         .post-title {
@@ -428,7 +428,7 @@
             <div class="profile-section">
                 <img id="profile-picture" class="profile-picture">
                 <div id="avatar-placeholder" class="avatar-placeholder"></div>
-                <span id="profile-name" class="profile-name">Nome Atual</span>
+                <span id="profile-name" class="profile-name">Carregando...</span>
             </div>
             <button id="createPostBtn">
                 <i class="fas fa-plus"></i>
@@ -505,11 +505,16 @@
 
         // Função para carregar posts
         async function loadPosts() {
-            console.log('Carregando posts do Firestore');
+            console.log('Iniciando loadPosts');
+            const feed = document.querySelector('.feed');
+            feed.innerHTML = '<p class="feed-placeholder">Carregando posts...</p>';
+
             try {
                 const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'));
+                console.log('Executando consulta Firestore');
                 const snapshot = await getDocs(q);
-                const feed = document.querySelector('.feed');
+                console.log('Snapshot recebido:', snapshot.size, 'posts');
+
                 feed.innerHTML = ''; // Limpar placeholder
 
                 if (snapshot.empty) {
@@ -522,6 +527,7 @@
                 const localUser = JSON.parse(localStorage.getItem('user') || '{}');
                 const display = JSON.parse(localStorage.getItem('display') || '{}');
                 const currentAuthor = display.name || localUser.name || 'Convidado';
+                console.log('Autor atual:', currentAuthor);
 
                 snapshot.forEach(doc => {
                     const post = doc.data();
@@ -573,8 +579,7 @@
                 });
             } catch (error) {
                 console.error('Erro ao carregar posts:', error);
-                const feed = document.querySelector('.feed');
-                feed.innerHTML = '<p class="feed-placeholder">Erro ao carregar posts. Tente novamente.</p>';
+                feed.innerHTML = '<p class="feed-placeholder">Erro ao carregar posts: ' + error.message + '</p>';
             }
         }
 
@@ -770,14 +775,15 @@
                 urlInput.focus();
             });
 
+            let isSubmitting = false;
             submitBtn.addEventListener('click', async () => {
-                if (submitBtn.disabled) return; // Impedir cliques múltiplos
-
-                console.log('Botão Enviar clicado');
+                if (isSubmitting) return;
+                isSubmitting = true;
                 submitBtn.disabled = true;
                 submitBtn.classList.add('loading');
                 submitBtn.textContent = 'Enviando...';
 
+                console.log('Botão Enviar clicado');
                 const title = document.getElementById('postTitle').value;
                 const text = document.getElementById('postText').value;
                 const uploadInput = document.getElementById('mediaUpload');
@@ -786,6 +792,7 @@
                 if (!text.trim()) {
                     console.log('Texto vazio, bloqueando envio');
                     alert('Escreva algo no post!');
+                    isSubmitting = false;
                     submitBtn.disabled = false;
                     submitBtn.classList.remove('loading');
                     submitBtn.textContent = 'Enviar';
@@ -820,11 +827,12 @@
                     console.log('Post enviado, fechando modal');
                     closePostModal();
                     alert('Post criado com sucesso!');
-                    await loadPosts(); // Recarregar posts após criar
+                    await loadPosts();
                 } catch (error) {
                     console.error('Erro ao enviar post:', error);
                     alert('Erro ao criar post: ' + error.message);
                 } finally {
+                    isSubmitting = false;
                     submitBtn.disabled = false;
                     submitBtn.classList.remove('loading');
                     submitBtn.textContent = 'Enviar';
@@ -855,12 +863,6 @@
             });
         }
 
-        // Adicionar evento ao botão de criar post
-        document.getElementById('createPostBtn').addEventListener('click', () => {
-            console.log('Botão Criar Postagem clicado');
-            openPostModal();
-        });
-
         // Funções existentes
         function getAvatarColor(name) {
             console.log('Gerando cor do avatar para:', name);
@@ -873,25 +875,37 @@
         }
 
         function loadUserInfo() {
-            console.log('Carregando informações do usuário');
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            const display = JSON.parse(localStorage.getItem('display') || '{}');
+            console.log('Iniciando loadUserInfo');
             const profileName = document.getElementById('profile-name');
             const profilePicture = document.getElementById('profile-picture');
             const avatarPlaceholder = document.getElementById('avatar-placeholder');
 
-            const name = display.name || user.name || 'Amigo';
+            let user = {};
+            let display = {};
+            try {
+                user = JSON.parse(localStorage.getItem('user') || '{}');
+                display = JSON.parse(localStorage.getItem('display') || '{}');
+                console.log('Dados do usuário:', { user, display });
+            } catch (e) {
+                console.error('Erro ao parsear localStorage:', e);
+            }
+
+            const name = display.name || user.name || 'Convidado';
+            console.log('Nome definido:', name);
             profileName.textContent = name;
 
             if (display.picture) {
+                console.log('Usando imagem de display:', display.picture);
                 profilePicture.src = display.picture;
                 profilePicture.style.display = 'block';
                 avatarPlaceholder.style.display = 'none';
             } else if (user.picture && user.type === 'google') {
+                console.log('Usando imagem do Google:', user.picture);
                 profilePicture.src = user.picture;
                 profilePicture.style.display = 'block';
                 avatarPlaceholder.style.display = 'none';
             } else {
+                console.log('Usando avatar placeholder para:', name);
                 profilePicture.style.display = 'none';
                 avatarPlaceholder.style.display = 'flex';
                 avatarPlaceholder.style.background = getAvatarColor(name);
@@ -899,6 +913,7 @@
             }
 
             if (user.type === 'form' && !display.name && !display.picture) {
+                console.log('Exibindo iframe de credenciais');
                 document.getElementById('iframe-container').style.display = 'block';
             }
         }
@@ -923,29 +938,51 @@
 
         function checkAuth() {
             console.log('Verificando autenticação');
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            if (!user || !user.name) {
+            try {
+                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                console.log('Usuário localStorage:', user);
+                if (!user || !user.name) {
+                    console.log('Sem usuário, redirecionando para /login');
+                    window.location.href = '/login';
+                    return false;
+                }
+                loadUserInfo();
+                return true;
+            } catch (e) {
+                console.error('Erro em checkAuth:', e);
                 window.location.href = '/login';
+                return false;
             }
-            loadUserInfo();
         }
 
         // Verificar autenticação Firebase
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             console.log('Estado de autenticação:', user ? `Logado (${user.uid})` : 'Deslogado');
-            if (!user && !localStorage.getItem('user')) {
-                window.location.href = '/login';
-            } else {
-                loadPosts(); // Recarregar posts quando usuário mudar
+            if (!user) {
+                console.log('Sem usuário Firebase, tentando login anônimo');
+                try {
+                    await signInAnonymously(auth);
+                    console.log('Login anônimo realizado');
+                } catch (error) {
+                    console.error('Erro no login anônimo:', error);
+                    window.location.href = '/login';
+                    return;
+                }
+            }
+            if (checkAuth()) {
+                console.log('Autenticação válida, carregando posts');
+                await loadPosts();
             }
         });
 
         // Inicializar eventos
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             console.log('Página carregada');
-            checkAuth();
             setupModalEvents();
-            loadPosts(); // Carregar posts ao iniciar
+            if (checkAuth()) {
+                console.log('Iniciando carga inicial de posts');
+                await loadPosts();
+            }
         });
     </script>
 </body>
