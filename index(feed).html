@@ -45,6 +45,46 @@
             text-align: center;
         }
 
+        .post {
+            border-bottom: 1px solid #eee;
+            padding: 15px 0;
+        }
+
+        .post:last-child {
+            border-bottom: none;
+        }
+
+        .post-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .post-text {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 10px;
+        }
+
+        .post-author {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .post-media img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .post-media iframe {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
         .iframe-container {
             position: fixed;
             top: 50%;
@@ -378,7 +418,7 @@
         // Import Firebase SDKs
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-analytics.js";
-        import { getFirestore, collection, addDoc, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-storage.js";
         import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
@@ -399,6 +439,64 @@
         const db = getFirestore(app);
         const storage = getStorage(app);
         const auth = getAuth(app);
+
+        // Função para carregar posts
+        async function loadPosts() {
+            console.log('Carregando posts do Firestore');
+            try {
+                const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'));
+                const snapshot = await getDocs(q);
+                const feed = document.querySelector('.feed');
+                feed.innerHTML = ''; // Limpar placeholder
+
+                if (snapshot.empty) {
+                    console.log('Nenhum post encontrado');
+                    feed.innerHTML = '<p class="feed-placeholder">Nenhum post ainda. Crie um agora!</p>';
+                    return;
+                }
+
+                snapshot.forEach(doc => {
+                    const post = doc.data();
+                    console.log('Post carregado:', post);
+
+                    // Escapar HTML para evitar XSS
+                    const escapeHTML = str => str.replace(/[&<>"']/g, m => ({
+                        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+                    })[m]);
+
+                    // Processar menções
+                    const textWithMentions = escapeHTML(post.text).replace(
+                        /@(\w+)/g,
+                        '<span class="mention">@$1</span>'
+                    );
+
+                    // Processar mídia
+                    let mediaHTML = '';
+                    if (post.media && post.media.url) {
+                        if (post.media.type === 'image' || post.media.type === 'gif') {
+                            mediaHTML = `<div class="post-media"><img src="${escapeHTML(post.media.url)}" alt="Imagem do post"></div>`;
+                        } else if (post.media.type === 'video' && post.media.embed) {
+                            mediaHTML = `<div class="post-media">${post.media.embed}</div>`;
+                        }
+                    }
+
+                    // Criar HTML do post
+                    const postHTML = `
+                        <div class="post">
+                            ${post.title ? `<div class="post-title">${escapeHTML(post.title)}</div>` : ''}
+                            <div class="post-text">${textWithMentions}</div>
+                            ${mediaHTML}
+                            <div class="post-author">Por ${escapeHTML(post.author)} em ${post.createdAt.toDate().toLocaleString()}</div>
+                        </div>
+                    `;
+                    feed.innerHTML += postHTML;
+                });
+            } catch (error) {
+                console.error('Erro ao carregar posts:', error);
+                const feed = document.querySelector('.feed');
+                feed.innerHTML = '<p class="feed-placeholder">Erro ao carregar posts. Tente novamente.</p>';
+            }
+        }
 
         // Função para criar um post
         async function createPost(title, text, media = null) {
@@ -616,6 +714,7 @@
                     console.log('Post enviado, fechando modal');
                     closePostModal();
                     alert('Post criado com sucesso!');
+                    await loadPosts(); // Recarregar posts após criar
                 } catch (error) {
                     console.error('Erro ao enviar post:', error);
                     alert('Erro ao criar post: ' + error.message);
@@ -734,6 +833,7 @@
             console.log('Página carregada');
             checkAuth();
             setupModalEvents();
+            loadPosts(); // Carregar posts ao iniciar
         });
     </script>
 </body>
