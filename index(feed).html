@@ -46,12 +46,12 @@
         }
 
         .post {
-            border-bottom: 1px solid #eee;
-            padding: 15px 0;
-        }
-
-        .post:last-child {
-            border-bottom: none;
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            max-width: 500px; /* Quadrado */
         }
 
         .post-title {
@@ -69,8 +69,17 @@
 
         .post-author {
             font-size: 12px;
-            color: #888;
             margin-top: 5px;
+        }
+
+        .post-author a {
+            color: #6e8efb;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .post-author a:hover {
+            text-decoration: underline;
         }
 
         .post-media img {
@@ -83,6 +92,26 @@
             max-width: 100%;
             border-radius: 8px;
             margin-top: 10px;
+        }
+
+        .post-actions {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .post-actions button {
+            padding: 5px 10px;
+            background: #ff4d4d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .post-actions button:hover {
+            background: #e60000;
         }
 
         .iframe-container {
@@ -277,6 +306,36 @@
             border-radius: 8px;
             cursor: pointer;
             width: 100%;
+            position: relative;
+        }
+
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .submit-btn::after {
+            content: '';
+            display: none;
+            border: 2px solid white;
+            border-radius: 50%;
+            border-top: 2px solid transparent;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .submit-btn.loading::after {
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            0% { transform: translateY(-50%) rotate(0deg); }
+            100% { transform: translateY(-50%) rotate(360deg); }
         }
 
         .mention {
@@ -334,6 +393,10 @@
 
             .modal-content textarea {
                 height: 80px;
+            }
+
+            .post {
+                max-width: 100%;
             }
         }
 
@@ -418,7 +481,7 @@
         // Import Firebase SDKs
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-analytics.js";
-        import { getFirestore, collection, addDoc, getDocs, query, orderBy, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy, deleteDoc, doc, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-storage.js";
         import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
@@ -455,13 +518,18 @@
                     return;
                 }
 
+                const currentUser = auth.currentUser;
+                const localUser = JSON.parse(localStorage.getItem('user') || '{}');
+                const display = JSON.parse(localStorage.getItem('display') || '{}');
+                const currentAuthor = display.name || localUser.name || 'Convidado';
+
                 snapshot.forEach(doc => {
                     const post = doc.data();
                     console.log('Post carregado:', post);
 
                     // Escapar HTML para evitar XSS
                     const escapeHTML = str => str.replace(/[&<>"']/g, m => ({
-                        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+                        '&': '&', '<': '<', '>': '>', '"': '"', "'": '''
                     })[m]);
 
                     // Processar menções
@@ -480,13 +548,25 @@
                         }
                     }
 
+                    // Botão de deletar (só para o autor)
+                    let deleteButton = '';
+                    if (post.author === currentAuthor) {
+                        deleteButton = `<button onclick="deletePost('${doc.id}')">Deletar</button>`;
+                    }
+
                     // Criar HTML do post
                     const postHTML = `
                         <div class="post">
                             ${post.title ? `<div class="post-title">${escapeHTML(post.title)}</div>` : ''}
                             <div class="post-text">${textWithMentions}</div>
                             ${mediaHTML}
-                            <div class="post-author">Por ${escapeHTML(post.author)} em ${post.createdAt.toDate().toLocaleString()}</div>
+                            <div class="post-author">
+                                Por <a href="/perfil?author=${encodeURIComponent(post.author)}">${escapeHTML(post.author)}</a>
+                                em ${post.createdAt.toDate().toLocaleString()}
+                            </div>
+                            <div class="post-actions">
+                                ${deleteButton}
+                            </div>
                         </div>
                     `;
                     feed.innerHTML += postHTML;
@@ -495,6 +575,22 @@
                 console.error('Erro ao carregar posts:', error);
                 const feed = document.querySelector('.feed');
                 feed.innerHTML = '<p class="feed-placeholder">Erro ao carregar posts. Tente novamente.</p>';
+            }
+        }
+
+        // Função para deletar post
+        async function deletePost(postId) {
+            console.log('Deletando post:', postId);
+            if (!confirm('Tem certeza que deseja deletar este post?')) {
+                return;
+            }
+            try {
+                await deleteDoc(doc(db, 'posts', postId));
+                console.log('Post deletado:', postId);
+                await loadPosts();
+            } catch (error) {
+                console.error('Erro ao deletar post:', error);
+                alert('Erro ao deletar post: ' + error.message);
             }
         }
 
@@ -523,9 +619,6 @@
                         console.log('Login anônimo bem-sucedido:', user.uid);
                     } catch (authError) {
                         console.error('Erro no login anônimo:', authError);
-                        if (authError.code === 'auth/configuration-not-found') {
-                            throw new Error('Autenticação anônima não está habilitada no Firebase. Ative no Firebase Console.');
-                        }
                         throw new Error('Falha na autenticação: ' + authError.message);
                     }
                 }
@@ -632,6 +725,10 @@
             const modal = document.getElementById('postModal');
             if (modal) {
                 modal.style.display = 'none';
+                const submitBtn = document.getElementById('submitPostBtn');
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('loading');
+                submitBtn.textContent = 'Enviar';
             }
         }
 
@@ -674,7 +771,13 @@
             });
 
             submitBtn.addEventListener('click', async () => {
+                if (submitBtn.disabled) return; // Impedir cliques múltiplos
+
                 console.log('Botão Enviar clicado');
+                submitBtn.disabled = true;
+                submitBtn.classList.add('loading');
+                submitBtn.textContent = 'Enviando...';
+
                 const title = document.getElementById('postTitle').value;
                 const text = document.getElementById('postText').value;
                 const uploadInput = document.getElementById('mediaUpload');
@@ -683,6 +786,9 @@
                 if (!text.trim()) {
                     console.log('Texto vazio, bloqueando envio');
                     alert('Escreva algo no post!');
+                    submitBtn.disabled = false;
+                    submitBtn.classList.remove('loading');
+                    submitBtn.textContent = 'Enviar';
                     return;
                 }
 
@@ -718,6 +824,10 @@
                 } catch (error) {
                     console.error('Erro ao enviar post:', error);
                     alert('Erro ao criar post: ' + error.message);
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.classList.remove('loading');
+                    submitBtn.textContent = 'Enviar';
                 }
             });
 
@@ -825,6 +935,8 @@
             console.log('Estado de autenticação:', user ? `Logado (${user.uid})` : 'Deslogado');
             if (!user && !localStorage.getItem('user')) {
                 window.location.href = '/login';
+            } else {
+                loadPosts(); // Recarregar posts quando usuário mudar
             }
         });
 
