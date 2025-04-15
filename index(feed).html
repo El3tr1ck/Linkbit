@@ -6,7 +6,6 @@
     <title>LinkBit - Feed</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
-        /* Mesma CSS da última versão */
         * {
             margin: 0;
             padding: 0;
@@ -337,6 +336,14 @@
             display: inline-block;
         }
 
+        /* Novo estilo para feedback de upload */
+        .upload-progress {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+            text-align: center;
+        }
+
         @keyframes spin {
             0% { transform: translateY(-50%) rotate(0deg); }
             100% { transform: translateY(-50%) rotate(360deg); }
@@ -477,6 +484,8 @@
                 <input type="file" id="mediaUpload" accept="image/*,video/*,image/gif">
                 <input type="text" id="mediaUrl" placeholder="Cole a URL da imagem ou vídeo">
             </div>
+            <!-- Novo elemento para feedback de upload -->
+            <div id="uploadProgress" class="upload-progress"></div>
             <button class="submit-btn" id="submitPostBtn">Enviar</button>
         </div>
     </div>
@@ -485,7 +494,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-analytics.js";
         import { getFirestore, collection, addDoc, getDocs, query, orderBy, deleteDoc, doc, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-storage.js";
+        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-storage.js"; // Alterado para uploadBytesResumable
         import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -639,11 +648,17 @@
                     }
                 }
 
+                // Alteração: Validação mais rigorosa do author
+                const author = display.name || localUser.name || `Convidado_${Math.floor(Math.random() * 10000)}`;
+                if (!author || author.trim() === '') {
+                    throw new Error('Nome do autor não pode ser vazio');
+                }
+
                 const post = {
                     title: title ? String(title).substring(0, 100) : '',
                     text: String(text).substring(0, 280),
                     media: media || {},
-                    author: display.name || localUser.name || 'Convidado',
+                    author: author,
                     createdAt: Timestamp.now(),
                     likes: []
                 };
@@ -658,18 +673,105 @@
             }
         }
 
+        // Nova função para comprimir imagens
+        async function compressImage(file) {
+            console.log('Comprimindo imagem:', file.name);
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        const maxWidth = 800; // Reduzir resolução
+                        const maxHeight = 800;
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > height) {
+                            if (width > maxWidth) {
+                                height = Math.round((height * maxWidth) / width);
+                                width = maxWidth;
+                            }
+                        } else {
+                            if (height > maxHeight) {
+                                width = Math.round((width * maxHeight) / height);
+                                height = maxHeight;
+                            }
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        canvas.toBlob(
+                            (blob) => {
+                                if (blob) {
+                                    resolve(new File([blob], file.name, { type: file.type }));
+                                } else {
+                                    reject(new Error('Falha ao comprimir imagem'));
+                                }
+                            },
+                            file.type,
+                            0.7 // Qualidade reduzida para 70%
+                        );
+                    };
+                    img.onerror = () => reject(new Error('Erro ao carregar imagem'));
+                };
+                reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
+                reader.readAsDataURL(file);
+            });
+        }
+
         async function uploadMedia(file) {
             console.log('Iniciando uploadMedia:', file.name);
+            const uploadProgress = document.getElementById('uploadProgress');
+            uploadProgress.textContent = 'Preparando upload...';
+
             try {
-                const storageRef = ref(storage, `media/${Date.now()}_${file.name}`);
-                await uploadBytes(storageRef, file);
-                const url = await getDownloadURL(storageRef);
-                const type = file.type.startsWith('video') ? 'video' : file.type === 'image/gif' ? 'gif' : 'image';
-                console.log('Upload concluído:', url);
-                return { type, url, embed: '' };
+                let uploadFile = file;
+                // Alteração: Comprimir imagens antes do upload
+                if (file.type.startsWith('image') && file.type !== 'image/gif') {
+                    uploadProgress.textContent = 'Comprimindo imagem...';
+                    uploadFile = await compressImage(file);
+                }
+
+                // Alteração: Limitar tamanho de vídeos
+                if (file.type.startsWith('video') && file.size > 50 * 1024 * 1024) {
+                    throw new Error('O vídeo é muito grande. O limite é 50 MB.');
+                }
+
+                const storageRef = ref(storage, `media/${Date.now()}_${uploadFile.name}`);
+                const uploadTask = uploadBytesResumable(storageRef, uploadFile);
+
+                // Alteração: Feedback de progresso
+                return new Promise((resolve, reject) => {
+                    uploadTask.on(
+                        'state_changed',
+                        (snapshot) => {
+                            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                            uploadProgress.textContent = `Upload: ${progress.toFixed(0)}%`;
+                            console.log(`Progresso do upload: ${progress}%`);
+                        },
+                        (error) => {
+                            console.error('Erro no upload:', error);
+                            uploadProgress.textContent = '';
+                            reject(new Error('Erro ao fazer upload: ' + error.message));
+                        },
+                        async () => {
+                            const url = await getDownloadURL(uploadTask.snapshot.ref);
+                            const type = uploadFile.type.startsWith('video') ? 'video' : uploadFile.type === 'image/gif' ? 'gif' : 'image';
+                            console.log('Upload concluído:', url);
+                            uploadProgress.textContent = '';
+                            resolve({ type, url, embed: '' });
+                        }
+                    );
+                });
             } catch (error) {
                 console.error('Erro em uploadMedia:', error);
-                throw new Error('Erro ao fazer upload: ' + error.message);
+                uploadProgress.textContent = '';
+                throw error;
             }
         }
 
@@ -725,6 +827,7 @@
                 document.getElementById('mediaOptions').style.display = 'none';
                 document.getElementById('mediaUpload').value = '';
                 document.getElementById('mediaUrl').value = '';
+                document.getElementById('uploadProgress').textContent = ''; // Novo: Resetar feedback
             } else {
                 console.error('Modal não encontrado');
             }
@@ -739,6 +842,7 @@
                 submitBtn.disabled = false;
                 submitBtn.classList.remove('loading');
                 submitBtn.textContent = 'Enviar';
+                document.getElementById('uploadProgress').textContent = ''; // Novo: Resetar feedback
             }
         }
 
@@ -949,26 +1053,6 @@
                 window.location.href = '/login';
                 return false;
             }
-        }
-
-        function setupSidebarEvents() {
-            console.log('Configurando eventos da sidebar');
-            document.getElementById('createPostBtn').addEventListener('click', () => {
-                console.log('Botão Criar Postagem clicado');
-                openPostModal();
-            });
-            document.getElementById('logoutBtn').addEventListener('click', () => {
-                console.log('Botão Sair clicado');
-                logout();
-            });
-            document.getElementById('credentialsBtn').addEventListener('click', () => {
-                console.log('Botão Credenciais clicado');
-                goToCredentials();
-            });
-            document.getElementById('profileBtn').addEventListener('click', () => {
-                console.log('Botão Perfil clicado');
-                goToProfile();
-            });
         }
 
         onAuthStateChanged(auth, async (user) => {
