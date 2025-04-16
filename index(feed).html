@@ -465,7 +465,6 @@
         <iframe src="/credenciais"></iframe>
     </div>
 
-    <!-- Modal de Criação de Post -->
     <div id="postModal" class="modal">
         <div class="modal-content">
             <h2>Criar Postagem</h2>
@@ -489,7 +488,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-analytics.js";
-        import { getFirestore, collection, addDoc, getDocs, query, orderBy, deleteDoc, doc, Timestamp, setDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy, deleteDoc, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-storage.js";
         import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
@@ -522,21 +521,60 @@
                 } catch (e) {
                     console.error('Erro ao parsear localStorage:', e);
                 }
-                const name = display.name || localUser.name || `Convidado_${user.uid.slice(0, 8)}`;
+
+                let name;
+                let picture = display.picture || localUser.picture || '';
+
+                // Determinar nome com base no provedor
+                if (user.providerData && user.providerData.length > 0) {
+                    const provider = user.providerData[0].providerId;
+                    console.log('Provedor detectado:', provider);
+                    if (provider === 'google.com') {
+                        name = user.displayName || user.email.split('@')[0] || `Google_${user.uid.slice(0, 8)}`;
+                        picture = user.photoURL || picture;
+                    } else if (provider === 'password') {
+                        name = user.email.split('@')[0] || `Usuario_${user.uid.slice(0, 8)}`;
+                    } else {
+                        name = display.name || localUser.name || `Usuario_${user.uid.slice(0, 8)}`;
+                    }
+                } else {
+                    // Login anônimo
+                    name = display.name || localUser.name || `Convidado_${user.uid.slice(0, 8)}`;
+                }
+
+                // Remover caracteres inválidos do nome
+                name = name.replace(/[^a-zA-Z0-9_]/g, '');
+
+                // Verificar se o nome já existe
+                let uniqueName = name;
+                let suffix = 1;
+                while (true) {
+                    const nameQuery = query(collection(db, 'users'), where('name', '==', uniqueName));
+                    const nameSnapshot = await getDocs(nameQuery);
+                    if (nameSnapshot.empty || nameSnapshot.docs[0].id === user.uid) {
+                        break;
+                    }
+                    uniqueName = `${name}_${suffix}`;
+                    suffix++;
+                }
+
                 const userDoc = doc(db, 'users', user.uid);
                 await setDoc(userDoc, {
                     uid: user.uid,
-                    name: name,
+                    name: uniqueName,
                     bio: display.bio || localUser.bio || '',
-                    picture: display.picture || localUser.picture || '',
+                    picture: picture,
                     createdAt: localUser.createdAt ? Timestamp.fromDate(new Date(localUser.createdAt)) : Timestamp.now()
                 }, { merge: true });
-                console.log('Perfil salvo automaticamente:', user.uid, 'com nome:', name);
+                console.log('Perfil salvo:', user.uid, 'com nome:', uniqueName);
+
                 // Atualizar localStorage
                 localUser.uid = user.uid;
-                localUser.name = name;
+                localUser.name = uniqueName;
                 localUser.createdAt = localUser.createdAt || new Date().toISOString();
-                display.name = name;
+                localUser.type = user.providerData[0]?.providerId || 'anonymous';
+                display.name = uniqueName;
+                display.picture = picture;
                 localStorage.setItem('user', JSON.stringify(localUser));
                 localStorage.setItem('display', JSON.stringify(display));
             } catch (error) {
@@ -581,11 +619,11 @@
                     console.log('Post carregado:', post);
 
                     const escapeHTML = str => str.replace(/[&<>"']/g, m => ({
-                        '&': '&amp;',
-                        '<': '&lt;',
-                        '>': '&gt;',
-                        '"': '&quot;',
-                        "'": '&#039;'
+                        '&': '&',
+                        '<': '<',
+                        '>': '>',
+                        '"': '"',
+                        "'": '''
                     })[m]);
 
                     const textWithMentions = escapeHTML(post.text).replace(
@@ -617,7 +655,7 @@
                             <div class="post-text">${textWithMentions}</div>
                             ${mediaHTML}
                             <div class="post-author">
-                                Por <a href="/perfil_outro?author=${encodeURIComponent(post.author)}">${escapeHTML(post.author)}</a>
+                                Por <a href="/outro_perfil?author=${encodeURIComponent(post.author)}">${escapeHTML(post.author)}</a>
                                 em ${post.createdAt.toDate().toLocaleString()}
                             </div>
                             <div class="post-actions">
@@ -711,17 +749,15 @@
         async function uploadMedia(file) {
             console.log('Iniciando uploadMedia:', file.name);
             try {
-                // Verificar autenticação
                 const user = auth.currentUser;
                 if (!user) {
                     throw new Error('Usuário não autenticado. Faça login novamente.');
                 }
 
-                // Validar tipo e tamanho do arquivo
                 if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
                     throw new Error('Apenas imagens e vídeos são permitidos.');
                 }
-                const maxSize = 5 * 1024 * 1024; // 5 MB
+                const maxSize = 5 * 1024 * 1024;
                 if (file.size > maxSize) {
                     throw new Error('O arquivo deve ter no máximo 5 MB.');
                 }
@@ -729,7 +765,6 @@
                 const storageRef = ref(storage, `media/${Date.now()}_${file.name}`);
                 const uploadTask = uploadBytesResumable(storageRef, file);
 
-                // Timeout de 30 segundos
                 const timeoutPromise = new Promise((_, reject) => {
                     setTimeout(() => reject(new Error('Tempo de upload excedido. Tente novamente.')), 30000);
                 });
@@ -845,7 +880,6 @@
             const videoBtn = document.getElementById('videoBtn');
             const uploadBtn = document.getElementById('uploadBtn');
             const urlBtn = document.getElementById('urlBtn');
-            const mediaOptions = document.getElementById('mediaOptions');
             const uploadInput = document.getElementById('mediaUpload');
             const urlInput = document.getElementById('mediaUrl');
             const submitBtn = document.getElementById('submitPostBtn');
@@ -1005,7 +1039,7 @@
                 profilePicture.src = display.picture;
                 profilePicture.style.display = 'block';
                 avatarPlaceholder.style.display = 'none';
-            } else if (user.picture && user.type === 'google') {
+            } else if (user.picture && user.type === 'google.com') {
                 console.log('Usando imagem do Google:', user.picture);
                 profilePicture.src = user.picture;
                 profilePicture.style.display = 'block';
@@ -1055,14 +1089,6 @@
             }
         }
 
-        function setupSidebarEvents() {
-            console.log('Configurando eventos da sidebar');
-            document.getElementById('createPostBtn').addEventListener('click', openPostModal);
-            document.getElementById('logoutBtn').addEventListener('click', logout);
-            document.getElementById('credentialsBtn').addEventListener('click', goToCredentials);
-            document.getElementById('profileBtn').addEventListener('click', goToProfile);
-        }
-
         onAuthStateChanged(auth, async (user) => {
             console.log('Estado de autenticação:', user ? `Logado (${user.uid})` : 'Deslogado');
             if (!user) {
@@ -1077,7 +1103,8 @@
                     return;
                 }
             }
-            // Inicializar localStorage
+
+            // Inicializar localStorage com dados do provedor
             let localUser = {};
             let display = {};
             try {
@@ -1086,26 +1113,47 @@
             } catch (e) {
                 console.error('Erro ao parsear localStorage:', e);
             }
+
             if (!localUser.uid || !localUser.name) {
+                let name;
+                let picture = '';
+                let type = 'anonymous';
+
+                if (user.providerData && user.providerData.length > 0) {
+                    const provider = user.providerData[0].providerId;
+                    type = provider;
+                    if (provider === 'google.com') {
+                        name = user.displayName || user.email.split('@')[0] || `Google_${user.uid.slice(0, 8)}`;
+                        picture = user.photoURL || '';
+                    } else if (provider === 'password') {
+                        name = user.email.split('@')[0] || `Usuario_${user.uid.slice(0, 8)}`;
+                    } else {
+                        name = `Usuario_${user.uid.slice(0, 8)}`;
+                    }
+                } else {
+                    name = `Convidado_${user.uid.slice(0, 8)}`;
+                }
+
+                // Remover caracteres inválidos
+                name = name.replace(/[^a-zA-Z0-9_]/g, '');
+
                 localUser = {
                     uid: user.uid,
-                    name: `Convidado_${user.uid.slice(0, 8)}`,
+                    name: name,
                     createdAt: new Date().toISOString(),
-                    type: 'anonymous'
+                    type: type,
+                    picture: picture
+                };
+                display = {
+                    name: name,
+                    bio: '',
+                    picture: picture
                 };
                 localStorage.setItem('user', JSON.stringify(localUser));
-                console.log('localStorage.user inicializado:', localUser);
-            }
-            if (!display.name) {
-                display = {
-                    name: localUser.name,
-                    bio: '',
-                    picture: ''
-                };
                 localStorage.setItem('display', JSON.stringify(display));
-                console.log('localStorage.display inicializado:', display);
+                console.log('localStorage inicializado:', { localUser, display });
             }
-            // Criar ou atualizar perfil automaticamente
+
             await saveUserProfile(user);
             if (checkAuth()) {
                 console.log('Autenticação válida, carregando dados');
