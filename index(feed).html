@@ -487,7 +487,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, query, orderBy, deleteDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy, deleteDoc, doc, setDoc, getDoc, where } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-storage.js";
         import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
         import { Timestamp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
@@ -1005,7 +1005,7 @@
 
                 try {
                     await createPost(title, text, media);
-                    console.log('setupModalEvents: Post criado');
+                    console.log('setupModalEvents LARGE: Post criado');
                     closePostModal();
                     alert('Post criado com sucesso!');
                     await loadPosts();
