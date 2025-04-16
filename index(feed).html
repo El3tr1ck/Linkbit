@@ -123,6 +123,22 @@
             background: #e60000;
         }
 
+        .like-btn {
+            background: none;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .like-btn.liked {
+            color: #ff4d4d;
+        }
+
+        .like-btn:hover {
+            color: #ff4d4d;
+        }
+
         .iframe-container {
             position: fixed;
             top: 50%;
@@ -487,7 +503,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, query, orderBy, deleteDoc, doc, setDoc, getDoc, where } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy, deleteDoc, doc, setDoc, getDoc, where, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-storage.js";
         import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
         import { Timestamp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
@@ -516,28 +532,27 @@
 
                 let name;
                 let picture = '';
+                let email = user.email || '';
 
-                // Determinar nome e foto com base no provedor
                 if (user.providerData && user.providerData.length > 0) {
                     const provider = user.providerData[0].providerId;
                     console.log('saveUserProfile: Provedor:', provider);
                     if (provider === 'google.com') {
                         name = user.displayName || user.email.split('@')[0] || `Google_${user.uid.slice(0, 8)}`;
                         picture = user.photoURL || '';
+                        email = user.email || '';
                     } else if (provider === 'password') {
                         name = user.email.split('@')[0] || `Usuario_${user.uid.slice(0, 8)}`;
                     } else {
-                        name = `Usuario_${user.uid.slice(0, 8)}`;
+                        name = `Convidado_${user.uid.slice(0, 8)}`;
                     }
                 } else {
                     name = `Convidado_${user.uid.slice(0, 8)}`;
                 }
 
-                // Limpar nome
                 name = name.replace(/[^a-zA-Z0-9_]/g, '');
                 console.log('saveUserProfile: Nome inicial:', name);
 
-                // Verificar unicidade
                 let uniqueName = name;
                 let suffix = 1;
                 while (true) {
@@ -557,23 +572,25 @@
                     name: uniqueName,
                     bio: '',
                     picture: picture,
+                    email: email,
                     createdAt: Timestamp.now()
                 };
                 await setDoc(userDoc, userData, { merge: true });
                 console.log('saveUserProfile: Perfil salvo:', userData);
 
-                // Atualizar localStorage
                 const localUser = {
                     uid: user.uid,
                     name: uniqueName,
                     picture: picture,
+                    email: email,
                     type: user.providerData[0]?.providerId || 'anonymous',
                     createdAt: new Date().toISOString()
                 };
                 const display = {
                     name: uniqueName,
                     picture: picture,
-                    bio: ''
+                    bio: '',
+                    email: email
                 };
                 localStorage.setItem('user', JSON.stringify(localUser));
                 localStorage.setItem('display', JSON.stringify(display));
@@ -594,8 +611,8 @@
 
             let name = 'Convidado';
             let picture = '';
+            let email = '';
 
-            // Tentar dados do usuário autenticado
             if (user) {
                 console.log('loadUserInfo: Usuário autenticado:', user.providerData);
                 if (user.providerData && user.providerData.length > 0) {
@@ -603,13 +620,14 @@
                     if (provider === 'google.com') {
                         name = user.displayName || user.email.split('@')[0] || name;
                         picture = user.photoURL || picture;
+                        email = user.email || email;
                     } else if (provider === 'password') {
                         name = user.email.split('@')[0] || name;
+                        email = user.email || email;
                     }
                 }
             }
 
-            // Buscar no Firestore
             try {
                 const userDoc = doc(db, 'users', user.uid);
                 const docSnap = await getDoc(userDoc);
@@ -617,15 +635,15 @@
                     const data = docSnap.data();
                     name = data.name || name;
                     picture = data.picture || picture;
+                    email = data.email || email;
                     console.log('loadUserInfo: Dados do Firestore:', data);
                 } else {
-                    console.log('loadUserInfo: Documento não encontrado, usando padrão');
+                    console.log('loadUserInfo: Documento não encontrado');
                 }
             } catch (error) {
                 console.error('loadUserInfo: Erro ao buscar Firestore:', error);
             }
 
-            // Atualizar UI
             profileName.textContent = name;
             console.log('loadUserInfo: Nome definido:', name);
 
@@ -649,15 +667,15 @@
                 avatarPlaceholder.textContent = name.charAt(0);
             }
 
-            // Atualizar localStorage
             const localUser = {
                 uid: user.uid,
                 name: name,
                 picture: picture,
+                email: email,
                 type: user.providerData[0]?.providerId || 'anonymous',
                 createdAt: new Date().toISOString()
             };
-            const display = { name, picture, bio: '' };
+            const display = { name, picture, bio: '', email };
             localStorage.setItem('user', JSON.stringify(localUser));
             localStorage.setItem('display', JSON.stringify(display));
             console.log('loadUserInfo: localStorage atualizado:', localUser);
@@ -720,16 +738,22 @@
                         deleteButton = `<button class="delete-post-btn" data-post-id="${doc.id}">Deletar</button>`;
                     }
 
+                    const isLiked = post.likes && post.likes.includes(currentUid);
+                    const likeCount = post.likes ? post.likes.length : 0;
+
                     const postHTML = `
                         <div class="post">
                             ${post.title ? `<div class="post-title">${escapeHTML(post.title)}</div>` : ''}
                             <div class="post-text">${textWithMentions}</div>
                             ${mediaHTML}
                             <div class="post-author">
-                                Por <a href="/outro_perfil?author=${encodeURIComponent(post.author)}">${escapeHTML(post.author)}</a>
+                                Por <a href="/perfil_publico?author=${encodeURIComponent(post.author)}">${escapeHTML(post.author)}</a>
                                 em ${post.createdAt.toDate().toLocaleString()}
                             </div>
                             <div class="post-actions">
+                                <button class="like-btn ${isLiked ? 'liked' : ''}" data-post-id="${doc.id}">
+                                    <i class="fas fa-heart"></i> ${likeCount}
+                                </button>
                                 ${deleteButton}
                             </div>
                         </div>
@@ -741,6 +765,13 @@
                     button.addEventListener('click', async () => {
                         const postId = button.dataset.postId;
                         await deletePost(postId);
+                    });
+                });
+
+                document.querySelectorAll('.like-btn').forEach(button => {
+                    button.addEventListener('click', async () => {
+                        const postId = button.dataset.postId;
+                        await toggleLike(postId, currentUid, button);
                     });
                 });
             } catch (error) {
@@ -761,6 +792,33 @@
             } catch (error) {
                 console.error('deletePost: Erro:', error);
                 alert('Erro ao deletar post: ' + error.message);
+            }
+        }
+
+        async function toggleLike(postId, userId, button) {
+            console.log('toggleLike: Iniciando:', postId, userId);
+            try {
+                const postRef = doc(db, 'posts', postId);
+                const postSnap = await getDoc(postRef);
+                if (!postSnap.exists()) {
+                    throw new Error('Post não encontrado');
+                }
+                const postData = postSnap.data();
+                const likes = postData.likes || [];
+
+                if (likes.includes(userId)) {
+                    await setDoc(postRef, { likes: arrayRemove(userId) }, { merge: true });
+                    button.classList.remove('liked');
+                    button.innerHTML = `<i class="fas fa-heart"></i> ${likes.length - 1}`;
+                } else {
+                    await setDoc(postRef, { likes: arrayUnion(userId) }, { merge: true });
+                    button.classList.add('liked');
+                    button.innerHTML = `<i class="fas fa-heart"></i> ${likes.length + 1}`;
+                }
+                console.log('toggleLike: Sucesso');
+            } catch (error) {
+                console.error('toggleLike: Erro:', error);
+                alert('Erro ao curtir post: ' + error.message);
             }
         }
 
@@ -821,7 +879,10 @@
                 return await new Promise((resolve, reject) => {
                     uploadTask.on(
                         'state_changed',
-                        snapshot => console.log('uploadMedia: Progresso:', (snapshot.bytesTransferred / snapshot.totalBytes) * 100, '%'),
+                        snapshot => {
+                            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                            console.log('uploadMedia: Progresso:', progress, '%');
+                        },
                         error => {
                             console.error('uploadMedia: Erro:', error);
                             reject(new Error(`Falha no upload: ${error.message}`));
@@ -921,6 +982,7 @@
             const uploadInput = document.getElementById('mediaUpload');
             const urlInput = document.getElementById('mediaUrl');
             const submitBtn = document.getElementById('submitPostBtn');
+            const mediaOptions = document.getElementById('mediaOptions');
 
             imageBtn.addEventListener('click', () => {
                 console.log('setupModalEvents: Botão Imagem');
@@ -1005,7 +1067,7 @@
 
                 try {
                     await createPost(title, text, media);
-                    console.log('setupModalEvents LARGE: Post criado');
+                    console.log('setupModalEvents: Post criado');
                     closePostModal();
                     alert('Post criado com sucesso!');
                     await loadPosts();
@@ -1058,7 +1120,7 @@
 
         function goToProfile() {
             console.log('goToProfile: Iniciando');
-            window.location.href = '/perfil';
+            window.location.href = '/perfil_privado';
         }
 
         function checkAuth() {
