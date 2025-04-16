@@ -489,7 +489,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-analytics.js";
-        import { getFirestore, collection, addDoc, getDocs, query, orderBy, deleteDoc, doc, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy, deleteDoc, doc, Timestamp, setDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-storage.js";
         import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
@@ -508,6 +508,41 @@
         const db = getFirestore(app);
         const storage = getStorage(app);
         const auth = getAuth(app);
+
+        async function saveUserProfile(user) {
+            try {
+                if (!user || !user.uid) {
+                    throw new Error('Usuário não autenticado');
+                }
+                let localUser = {};
+                let display = {};
+                try {
+                    localUser = JSON.parse(localStorage.getItem('user') || '{}');
+                    display = JSON.parse(localStorage.getItem('display') || '{}');
+                } catch (e) {
+                    console.error('Erro ao parsear localStorage:', e);
+                }
+                const name = display.name || localUser.name || `Convidado_${user.uid.slice(0, 8)}`;
+                const userDoc = doc(db, 'users', user.uid);
+                await setDoc(userDoc, {
+                    uid: user.uid,
+                    name: name,
+                    bio: display.bio || localUser.bio || '',
+                    picture: display.picture || localUser.picture || '',
+                    createdAt: localUser.createdAt ? Timestamp.fromDate(new Date(localUser.createdAt)) : Timestamp.now()
+                }, { merge: true });
+                console.log('Perfil salvo automaticamente:', user.uid, 'com nome:', name);
+                // Atualizar localStorage
+                localUser.uid = user.uid;
+                localUser.name = name;
+                localUser.createdAt = localUser.createdAt || new Date().toISOString();
+                display.name = name;
+                localStorage.setItem('user', JSON.stringify(localUser));
+                localStorage.setItem('display', JSON.stringify(display));
+            } catch (error) {
+                console.error('Erro ao salvar perfil:', error);
+            }
+        }
 
         async function loadPosts() {
             console.log('Iniciando loadPosts');
@@ -546,11 +581,11 @@
                     console.log('Post carregado:', post);
 
                     const escapeHTML = str => str.replace(/[&<>"']/g, m => ({
-                        '&': '&',
-                        '<': '<',
-                        '>': '>',
-                        '"': '"',
-                        "'": "'",
+                        '&': '&amp;',
+                        '<': '&lt;',
+                        '>': '&gt;',
+                        '"': '&quot;',
+                        "'": '&#039;'
                     })[m]);
 
                     const textWithMentions = escapeHTML(post.text).replace(
@@ -582,7 +617,7 @@
                             <div class="post-text">${textWithMentions}</div>
                             ${mediaHTML}
                             <div class="post-author">
-                                Por <a href="/perfil?author=${encodeURIComponent(post.author)}">${escapeHTML(post.author)}</a>
+                                Por <a href="/perfil_outro?author=${encodeURIComponent(post.author)}">${escapeHTML(post.author)}</a>
                                 em ${post.createdAt.toDate().toLocaleString()}
                             </div>
                             <div class="post-actions">
@@ -648,7 +683,7 @@
                     }
                 }
 
-                const author = display.name || localUser.name || `Convidado_${user.uid}`;
+                const author = display.name || localUser.name || `Convidado_${user.uid.slice(0, 8)}`;
                 if (!author || author.trim() === '') {
                     throw new Error('Nome do autor não pode ser vazio');
                 }
@@ -708,7 +743,11 @@
                             },
                             (error) => {
                                 console.error('Erro no upload:', error);
-                                reject(new Error(`Falha no upload: ${error.message}`));
+                                let message = `Falha no upload: ${error.message}`;
+                                if (error.message.includes('cors')) {
+                                    message += ' Verifique as configurações de CORS no Firebase Storage.';
+                                }
+                                reject(new Error(message));
                             },
                             async () => {
                                 try {
@@ -1003,7 +1042,7 @@
             try {
                 const user = JSON.parse(localStorage.getItem('user') || '{}');
                 console.log('Usuário localStorage:', user);
-                if (!user || !user.name) {
+                if (!user || !user.uid) {
                     console.log('Sem usuário, redirecionando para /login');
                     window.location.href = '/login';
                     return false;
@@ -1018,22 +1057,10 @@
 
         function setupSidebarEvents() {
             console.log('Configurando eventos da sidebar');
-            document.getElementById('createPostBtn').addEventListener('click', () => {
-                console.log('Botão Criar Postagem clicado');
-                openPostModal();
-            });
-            document.getElementById('logoutBtn').addEventListener('click', () => {
-                console.log('Botão Sair clicado');
-                logout();
-            });
-            document.getElementById('credentialsBtn').addEventListener('click', () => {
-                console.log('Botão Credenciais clicado');
-                goToCredentials();
-            });
-            document.getElementById('profileBtn').addEventListener('click', () => {
-                console.log('Botão Perfil clicado');
-                goToProfile();
-            });
+            document.getElementById('createPostBtn').addEventListener('click', openPostModal);
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+            document.getElementById('credentialsBtn').addEventListener('click', goToCredentials);
+            document.getElementById('profileBtn').addEventListener('click', goToProfile);
         }
 
         onAuthStateChanged(auth, async (user) => {
@@ -1041,14 +1068,45 @@
             if (!user) {
                 console.log('Sem usuário Firebase, tentando login anônimo');
                 try {
-                    await signInAnonymously(auth);
-                    console.log('Login anônimo realizado');
+                    const credential = await signInAnonymously(auth);
+                    user = credential.user;
+                    console.log('Login anônimo realizado:', user.uid);
                 } catch (error) {
                     console.error('Erro no login anônimo:', error);
                     window.location.href = '/login';
                     return;
                 }
             }
+            // Inicializar localStorage
+            let localUser = {};
+            let display = {};
+            try {
+                localUser = JSON.parse(localStorage.getItem('user') || '{}');
+                display = JSON.parse(localStorage.getItem('display') || '{}');
+            } catch (e) {
+                console.error('Erro ao parsear localStorage:', e);
+            }
+            if (!localUser.uid || !localUser.name) {
+                localUser = {
+                    uid: user.uid,
+                    name: `Convidado_${user.uid.slice(0, 8)}`,
+                    createdAt: new Date().toISOString(),
+                    type: 'anonymous'
+                };
+                localStorage.setItem('user', JSON.stringify(localUser));
+                console.log('localStorage.user inicializado:', localUser);
+            }
+            if (!display.name) {
+                display = {
+                    name: localUser.name,
+                    bio: '',
+                    picture: ''
+                };
+                localStorage.setItem('display', JSON.stringify(display));
+                console.log('localStorage.display inicializado:', display);
+            }
+            // Criar ou atualizar perfil automaticamente
+            await saveUserProfile(user);
             if (checkAuth()) {
                 console.log('Autenticação válida, carregando dados');
                 loadUserInfo();
