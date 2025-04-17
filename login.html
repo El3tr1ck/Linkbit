@@ -20,51 +20,79 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            padding: 20px;
+            padding: 15px;
         }
 
         .login-container {
             background: rgba(255, 255, 255, 0.95);
-            border-radius: 25px;
-            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
-            padding: 40px;
-            max-width: 500px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+            max-width: 450px;
             width: 100%;
             text-align: center;
-            animation: fadeIn 1s ease;
+            animation: fadeIn 0.8s ease;
         }
 
         h1 {
-            font-size: 36px;
+            font-size: 32px;
             color: #333;
             margin-bottom: 10px;
-            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
         }
 
         p {
             color: #666;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
+            font-size: 16px;
         }
 
-        .login-option {
-            margin-bottom: 30px;
+        .login-buttons {
             display: flex;
             flex-direction: column;
+            gap: 15px;
             align-items: center;
         }
 
-        .login-option h3 {
+        .login-button {
+            padding: 15px;
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            cursor: pointer;
+            width: 80%;
+            max-width: 300px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .login-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .login-panel {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .login-panel.active {
+            display: block;
+        }
+
+        .login-panel h3 {
             color: #6e8efb;
             margin-bottom: 15px;
-            font-size: 18px;
+            font-size: 20px;
         }
 
         form {
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 12px;
             width: 100%;
             max-width: 300px;
+            margin: 0 auto;
         }
 
         input {
@@ -100,7 +128,7 @@
         }
 
         #code-verification {
-            margin-top: 20px;
+            margin-top: 15px;
             display: flex;
             gap: 10px;
             justify-content: center;
@@ -118,7 +146,11 @@
             margin: 0 auto;
         }
 
-        /* Estilo do painel de conta logada */
+        .back-button {
+            margin-top: 20px;
+            background: #666;
+        }
+
         .account-prompt {
             position: fixed;
             top: 50%;
@@ -127,34 +159,29 @@
             background: rgba(255, 255, 255, 0.95);
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            padding: 30px;
+            padding: 25px;
             max-width: 400px;
-            width: 100%;
+            width: 90%;
             text-align: center;
             z-index: 1000;
         }
 
         .account-prompt h2 {
             color: #6e8efb;
-            font-size: 20px;
-            margin-bottom: 20px;
+            font-size: 18px;
+            margin-bottom: 15px;
         }
 
         .account-prompt p {
             color: #333;
-            font-size: 16px;
-            margin-bottom: 20px;
+            font-size: 15px;
+            margin-bottom: 15px;
         }
 
         .account-prompt .buttons {
             display: flex;
             gap: 10px;
             justify-content: center;
-        }
-
-        .account-prompt button {
-            padding: 10px 20px;
-            max-width: 150px;
         }
 
         @keyframes fadeIn {
@@ -168,10 +195,15 @@
             }
 
             h1 {
-                font-size: 28px;
+                font-size: 26px;
             }
 
-            .account-prompt h2 {
+            .login-button {
+                font-size: 16px;
+                padding: 12px;
+            }
+
+            .login-panel h3 {
                 font-size: 18px;
             }
         }
@@ -182,16 +214,23 @@
         <h1>LinkBit</h1>
         <p>Conecte-se com seus amigos!</p>
 
-        <div class="login-option">
+        <div class="login-buttons" id="login-buttons">
+            <button class="login-button" onclick="showPanel('google-panel')">Entrar com Google</button>
+            <button class="login-button" onclick="showPanel('email-panel')">Entrar com Email</button>
+            <button class="login-button" onclick="showPanel('guest-panel')">Entrar como Convidado</button>
+        </div>
+
+        <div class="login-panel" id="google-panel">
             <h3>Entrar com Google</h3>
             <div id="g_id_onload"
                  data-client_id="1080659488834-hkd7o476bpmahuvukbitdpkhevif1sm2.apps.googleusercontent.com"
                  data-callback="handleCredentialResponse">
             </div>
             <div class="g_id_signin" data-type="standard"></div>
+            <button class="back-button" onclick="showMainMenu()">Voltar</button>
         </div>
 
-        <div class="login-option">
+        <div class="login-panel" id="email-panel">
             <h3>Entrar com Email</h3>
             <form id="login-form">
                 <input type="text" id="name" placeholder="Nome" required>
@@ -204,15 +243,16 @@
                 <button onclick="verifyCode()">Verificar</button>
             </div>
             <p id="error-message" style="display: none;"></p>
+            <button class="back-button" onclick="showMainMenu()">Voltar</button>
         </div>
 
-        <div class="login-option">
+        <div class="login-panel" id="guest-panel">
             <h3>Entrar como Convidado</h3>
             <button onclick="guestLogin()">Acessar como Convidado</button>
+            <button class="back-button" onclick="showMainMenu()">Voltar</button>
         </div>
     </div>
 
-    <!-- Painel para conta logada -->
     <div class="account-prompt" id="account-prompt" style="display: none;">
         <h2>Já está logado!</h2>
         <p>Quer logar em outra conta ou continuar com <span id="current-user">Amigo</span>?</p>
@@ -225,7 +265,6 @@
     <script>
         emailjs.init("Ua1Fx3PQbravSSQ21");
 
-        // Função para gerar hash simples
         function simpleHash(str) {
             let hash = 0;
             for (let i = 0; i < str.length; i++) {
@@ -339,7 +378,6 @@
             return JSON.parse(jsonPayload);
         }
 
-        // Função para verificar login e mostrar painel
         function checkLoginStatus() {
             const user = JSON.parse(localStorage.getItem('user') || '{}');
             const loginContainer = document.getElementById('login-container');
@@ -356,7 +394,6 @@
             }
         }
 
-        // Função para trocar de conta
         function switchAccount() {
             localStorage.removeItem('user');
             localStorage.removeItem('display');
@@ -364,12 +401,22 @@
             window.location.reload();
         }
 
-        // Função para continuar com a conta atual
         function continueAccount() {
             window.location.href = 'index(feed).html';
         }
 
-        // Executa ao carregar
+        function showPanel(panelId) {
+            document.getElementById('login-buttons').style.display = 'none';
+            document.getElementById(panelId).classList.add('active');
+        }
+
+        function showMainMenu() {
+            document.getElementById('login-buttons').style.display = 'flex';
+            document.querySelectorAll('.login-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', checkLoginStatus);
     </script>
 </body>
