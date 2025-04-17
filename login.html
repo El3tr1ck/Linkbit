@@ -209,145 +209,193 @@
         </div>
     </div>
 
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
-    <script>
-        // Inicializar EmailJS
-        emailjs.init("Ua1Fx3PQbravSSQ21");
+<!-- ... início do login.html igual ao anterior ... -->
 
-        // Configuração do Google Sign-In
-        window.onload = function () {
-            google.accounts.id.initialize({
-                client_id: "89714192278-t2vd6qtojn4jief0psghut7un5jmtjjf.apps.googleusercontent.com",
-                callback: handleGoogleSignIn
-            });
-            google.accounts.id.renderButton(
-                document.getElementById("googleLogin"),
-                { theme: "outline", size: "large" }
-            );
-        };
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import { getAuth, signInWithCredential, GoogleAuthProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
-        function handleGoogleSignIn(response) {
-            // Aqui você pode processar o token JWT do Google
-            // Para simplificação, redirecionamos diretamente
-            window.location.href = "feed.html";
-        }
+    // Configuração do Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyA5m65LSJQDKFTdbl_iB71URRIhXWYhUcQ",
+        authDomain: "chat-alpha-e-beta.firebaseapp.com",
+        projectId: "chat-alpha-e-beta",
+        storageBucket: "chat-alpha-e-beta.firebasestorage.app",
+        messagingSenderId: "873372870268",
+        appId: "1:873372870268:web:74a0711b5f3840dc350bf9",
+        measurementId: "G-8HXRW3F6Q8"
+    };
 
-        // Abrir/Fechar Modais
-        const emailModal = document.getElementById("emailModal");
-        const codeModal = document.getElementById("codeModal");
-        const emailLoginBtn = document.getElementById("emailLogin");
-        const closeEmailModal = document.getElementById("closeEmailModal");
-        const closeCodeModal = document.getElementById("closeCodeModal");
+    // Inicializar Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
 
-        emailLoginBtn.onclick = () => {
-            emailModal.style.display = "flex";
-        };
+    // Inicializar EmailJS
+    emailjs.init("Ua1Fx3PQbravSSQ21");
 
-        closeEmailModal.onclick = () => {
-            emailModal.style.display = "none";
-        };
+    // Configuração do Google Sign-In
+    window.onload = function () {
+        google.accounts.id.initialize({
+            client_id: "89714192278-t2vd6qtojn4jief0psghut7un5jmtjjf.apps.googleusercontent.com",
+            callback: handleGoogleSignIn
+        });
+        google.accounts.id.renderButton(
+            document.getElementById("googleLogin"),
+            { theme: "outline", size: "large" }
+        );
+    };
 
-        closeCodeModal.onclick = () => {
-            codeModal.style.display = "none";
-        };
-
-        // Enviar Código de Verificação
-        const submitEmail = document.getElementById("submitEmail");
-        submitEmail.onclick = () => {
-            const name = document.getElementById("name").value;
-            const email = document.getElementById("email").value;
-            const password = document.getElementById("password").value;
-
-            if (!name || !email || !password) {
-                alert("Por favor, preencha todos os campos.");
-                return;
-            }
-
-            // Gerar código de 6 dígitos
-            const code = Math.floor(100000 + Math.random() * 900000).toString();
-            const timestamp = Date.now();
-
-            // Armazenar código e timestamp
-            localStorage.setItem("verificationCode", code);
-            localStorage.setItem("codeTimestamp", timestamp);
-
-            // Enviar e-mail com EmailJS
-            emailjs.send("service_yqadn6g", "template_h19nxad", {
-                subject: "Código de Verificação LinkTbit",
-                to_email: email,
-                from_name: "LinkTbit",
-                message: code
-            }).then(() => {
-                emailModal.style.display = "none";
-                codeModal.style.display = "flex";
-                startTimer();
-            }).catch((error) => {
-                alert("Erro ao enviar o e-mail: " + error);
-            });
-        };
-
-        // Timer de 10 minutos
-        let timerInterval;
-        function startTimer() {
-            const timestamp = parseInt(localStorage.getItem("codeTimestamp"));
-            const expiryTime = timestamp + 10 * 60 * 1000; // 10 minutos em milissegundos
-            const timerDisplay = document.getElementById("timer");
-
-            timerInterval = setInterval(() => {
-                const now = Date.now();
-                const timeLeft = expiryTime - now;
-
-                if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    timerDisplay.textContent = "Código expirado!";
-                    localStorage.removeItem("verificationCode");
-                    localStorage.removeItem("codeTimestamp");
-                    return;
-                }
-
-                const minutes = Math.floor(timeLeft / 1000 / 60);
-                const seconds = Math.floor((timeLeft / 1000) % 60);
-                timerDisplay.textContent = `Tempo restante: ${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
-            }, 1000);
-        }
-
-        // Verificar Código
-        const verifyCodeBtn = document.getElementById("verifyCode");
-        const errorMessage = document.getElementById("errorMessage");
-        verifyCodeBtn.onclick = () => {
-            const inputCode = document.getElementById("code").value;
-            const storedCode = localStorage.getItem("verificationCode");
-            const timestamp = parseInt(localStorage.getItem("codeTimestamp"));
-            const now = Date.now();
-
-            errorMessage.style.display = "none";
-
-            if (!storedCode || !timestamp) {
-                errorMessage.textContent = "Nenhum código encontrado ou expirado.";
-                errorMessage.style.display = "block";
-                return;
-            }
-
-            if (now > timestamp + 10 * 60 * 1000) {
-                errorMessage.textContent = "Código expirado. Solicite um novo.";
-                errorMessage.style.display = "block";
-                localStorage.removeItem("verificationCode");
-                localStorage.removeItem("codeTimestamp");
-                clearInterval(timerInterval);
-                return;
-            }
-
-            if (inputCode === storedCode) {
-                clearInterval(timerInterval);
-                localStorage.removeItem("verificationCode");
-                localStorage.removeItem("codeTimestamp");
+    function handleGoogleSignIn(response) {
+        const credential = GoogleAuthProvider.credential(response.credential);
+        signInWithCredential(auth, credential)
+            .then(() => {
                 window.location.href = "feed.html";
-            } else {
-                errorMessage.textContent = "Código inválido. Tente novamente.";
+            })
+            .catch((error) => {
+                alert("Erro ao logar com Google: " + error.message);
+            });
+    }
+
+    // Abrir/Fechar Modais
+    const emailModal = document.getElementById("emailModal");
+    const codeModal = document.getElementById("codeModal");
+    const emailLoginBtn = document.getElementById("emailLogin");
+    const closeEmailModal = document.getElementById("closeEmailModal");
+    const closeCodeModal = document.getElementById("closeCodeModal");
+
+    emailLoginBtn.onclick = () => {
+        emailModal.style.display = "flex";
+    };
+
+    closeEmailModal.onclick = () => {
+        emailModal.style.display = "none";
+    };
+
+    closeCodeModal.onclick = () => {
+        codeModal.style.display = "none";
+    };
+
+    // Enviar Código de Verificação
+    const submitEmail = document.getElementById("submitEmail");
+    submitEmail.onclick = () => {
+        const name = document.getElementById("name").value;
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+
+        if (!name || !email || !password) {
+            alert("Por favor, preencha todos os campos.");
+            return;
+        }
+
+        // Armazenar nome e e-mail no localStorage
+        localStorage.setItem("userName", name);
+        localStorage.setItem("userEmail", email);
+        localStorage.setItem("userPassword", password);
+
+        // Gerar código de 6 dígitos
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        const timestamp = Date.now();
+
+        // Armazenar código e timestamp
+        localStorage.setItem("verificationCode", code);
+        localStorage.setItem("codeTimestamp", timestamp);
+
+        // Enviar e-mail com EmailJS
+        emailjs.send("service_yqadn6g", "template_h19nxad", {
+            subject: "Código de Verificação LinkTbit",
+            to_email: email,
+            from_name: "LinkTbit",
+            message: code
+        }).then(() => {
+            emailModal.style.display = "none";
+            codeModal.style.display = "flex";
+            startTimer();
+        }).catch((error) => {
+            alert("Erro ao enviar o e-mail: " + error);
+        });
+    };
+
+    // Timer de 10 minutos
+    let timerInterval;
+    function startTimer() {
+        const timestamp = parseInt(localStorage.getItem("codeTimestamp"));
+        const expiryTime = timestamp + 10 * 60 * 1000; // 10 minutos em milissegundos
+        const timerDisplay = document.getElementById("timer");
+
+        timerInterval = setInterval(() => {
+            const now = Date.now();
+            const timeLeft = expiryTime - now;
+
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                timerDisplay.textContent = "Código expirado!";
+                localStorage.removeItem("verificationCode");
+                localStorage.removeItem("codeTimestamp");
+                return;
+            }
+
+            const minutes = Math.floor(timeLeft / 1000 / 60);
+            const seconds = Math.floor((timeLeft / 1000) % 60);
+            timerDisplay.textContent = `Tempo restante: ${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+        }, 1000);
+    }
+
+    // Verificar Código
+    const verifyCodeBtn = document.getElementById("verifyCode");
+    const errorMessage = document.getElementById("errorMessage");
+    verifyCodeBtn.onclick = async () => {
+        const inputCode = document.getElementById("code").value;
+        const storedCode = localStorage.getItem("verificationCode");
+        const timestamp = parseInt(localStorage.getItem("codeTimestamp"));
+        const now = Date.now();
+        const email = localStorage.getItem("userEmail");
+        const password = localStorage.getItem("userPassword");
+
+        errorMessage.style.display = "none";
+
+        if (!storedCode || !timestamp) {
+            errorMessage.textContent = "Nenhum código encontrado ou expirado.";
+            errorMessage.style.display = "block";
+            return;
+        }
+
+        if (now > timestamp + 10 * 60 * 1000) {
+            errorMessage.textContent = "Código expirado. Solicite um novo.";
+            errorMessage.style.display = "block";
+            localStorage.removeItem("verificationCode");
+            localStorage.removeItem("codeTimestamp");
+            clearInterval(timerInterval);
+            return;
+        }
+
+        if (inputCode === storedCode) {
+            clearInterval(timerInterval);
+            try {
+                // Tentar fazer login; se falhar, criar nova conta
+                try {
+                    await signInWithEmailAndPassword(auth, email, password);
+                } catch (signInError) {
+                    if (signInError.code === "auth/user-not-found") {
+                        await createUserWithEmailAndPassword(auth, email, password);
+                    } else {
+                        throw signInError;
+                    }
+                }
+                localStorage.removeItem("verificationCode");
+                localStorage.removeItem("codeTimestamp");
+                localStorage.removeItem("userEmail");
+                localStorage.removeItem("userPassword");
+                window.location.href = "feed.html";
+            } catch (error) {
+                errorMessage.textContent = "Erro ao autenticar: " + error.message;
                 errorMessage.style.display = "block";
             }
-        };
-    </script>
+        } else {
+            errorMessage.textContent = "Código inválido. Tente novamente.";
+            errorMessage.style.display = "block";
+        }
+    };
+</script>
+<!-- ... fim do login.html ... -->
 </body>
 </html>
