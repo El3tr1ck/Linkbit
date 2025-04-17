@@ -1,12 +1,9 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LinkBit - Login</title>
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <title>LinkTbit - Login</title>
     <style>
         * {
             margin: 0;
@@ -16,417 +13,341 @@
         }
 
         body {
-            background: linear-gradient(135deg, #6e8efb, #a777e3, #ff6b6b);
+            background: #f0f4ff;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            padding: 15px;
+            overflow-x: hidden;
         }
 
-        .login-container {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-            padding: 30px;
-            max-width: 450px;
-            width: 100%;
-            text-align: center;
-            animation: fadeIn 0.8s ease;
-        }
-
-        h1 {
-            font-size: 32px;
-            color: #333;
-            margin-bottom: 10px;
-        }
-
-        p {
-            color: #666;
-            margin-bottom: 20px;
-            font-size: 16px;
-        }
-
-        .login-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            align-items: center;
-        }
-
-        .login-button {
-            padding: 15px;
-            background: linear-gradient(135deg, #6e8efb, #a777e3);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 18px;
-            cursor: pointer;
-            width: 80%;
-            max-width: 300px;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .login-button i {
-            font-size: 20px;
-        }
-
-        .login-button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        .login-panel {
-            display: none;
-            margin-top: 20px;
-        }
-
-        .login-panel.active {
-            display: block;
-        }
-
-        .login-panel h3 {
-            color: #6e8efb;
-            margin-bottom: 15px;
-            font-size: 20px;
-        }
-
-        form {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            width: 100%;
-            max-width: 300px;
-            margin: 0 auto;
-        }
-
-        input {
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s ease;
-        }
-
-        input:focus {
-            border-color: #6e8efb;
-            outline: none;
-        }
-
-        button {
-            padding: 12px;
-            background: linear-gradient(135deg, #6e8efb, #a777e3);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            width: 100%;
-            max-width: 200px;
-            margin: 0 auto;
-        }
-
-        button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        #code-verification {
-            margin-top: 15px;
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            width: 100%;
-            max-width: 300px;
-        }
-
-        #error-message {
-            font-size: 14px;
-            margin-top: 10px;
-            color: red;
-        }
-
-        .g_id_signin {
-            margin: 0 auto;
-        }
-
-        .back-button {
-            margin-top: 20px;
-            background: #666;
-        }
-
-        .account-prompt {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            padding: 25px;
+        .container {
+            background: #ffffff;
             max-width: 400px;
-            width: 90%;
+            width: 90vw;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
             text-align: center;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            padding: 30px;
+            color: #ffffff;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .header p {
+            font-size: 18px;
+            margin-top: 5px;
+            color: #e6e6ff;
+        }
+
+        .login-options {
+            padding: 25px;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+            text-align: center;
+        }
+
+        .btn-google {
+            background: #ffffff;
+            border: 2px solid #6e8efb;
+            color: #333;
+        }
+
+        .btn-google:hover {
+            background: #f0f4ff;
+        }
+
+        .btn-email {
+            background: #6e8efb;
+            border: none;
+            color: #ffffff;
+        }
+
+        .btn-email:hover {
+            background: #5a7de8;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
             z-index: 1000;
         }
 
-        .account-prompt h2 {
+        .modal-content {
+            background: #ffffff;
+            max-width: 400px;
+            width: 90vw;
+            border-radius: 12px;
+            padding: 25px;
+            position: relative;
+        }
+
+        .modal-content h2 {
             color: #6e8efb;
-            font-size: 18px;
+            font-size: 20px;
             margin-bottom: 15px;
         }
 
-        .account-prompt p {
-            color: #333;
-            font-size: 15px;
-            margin-bottom: 15px;
+        .modal-content input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 2px solid #6e8efb;
+            border-radius: 8px;
+            font-size: 16px;
         }
 
-        .account-prompt .buttons {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
+        .btn-submit {
+            background: #6e8efb;
+            color: #ffffff;
+            border: none;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        .btn-submit:hover {
+            background: #5a7de8;
         }
 
-        @media (max-width: 400px) {
-            .login-container, .account-prompt {
-                padding: 20px;
+        .btn-close {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 20px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        #timer {
+            color: #666;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .error {
+            color: #e63946;
+            font-size: 14px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 24px;
             }
 
-            h1 {
-                font-size: 26px;
-            }
-
-            .login-button {
+            .header p {
                 font-size: 16px;
-                padding: 12px;
             }
 
-            .login-panel h3 {
-                font-size: 18px;
+            .btn {
+                font-size: 14px;
+                padding: 10px;
+            }
+
+            .modal-content {
+                padding: 20px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="login-container" id="login-container">
-        <h1>LinkBit</h1>
-        <p>Conecte-se com seus amigos!</p>
-
-        <div class="login-buttons" id="login-buttons">
-            <button class="login-button" onclick="showPanel('google-panel')">
-                <i class="fab fa-google"></i> Entrar com Google
-            </button>
-            <button class="login-button" onclick="showPanel('email-panel')">
-                <i class="fas fa-envelope"></i> Entrar com Email
-            </button>
-            <button class="login-button" onclick="guestLogin()">
-                <i class="fas fa-user"></i> Entrar como Convidado
-            </button>
+    <div class="container">
+        <div class="header">
+            <h1>LinkTbit</h1>
+            <p>LTB</p>
         </div>
-
-        <div class="login-panel" id="google-panel">
-            <h3>Entrar com Google</h3>
-            <div id="g_id_onload"
-                 data-client_id="1080659488834-hkd7o476bpmahuvukbitdpkhevif1sm2.apps.googleusercontent.com"
-                 data-callback="handleCredentialResponse">
-            </div>
-            <div class="g_id_signin" data-type="standard"></div>
-            <button class="back-button" onclick="showMainMenu()">Voltar</button>
-        </div>
-
-        <div class="login-panel" id="email-panel">
-            <h3>Entrar com Email</h3>
-            <form id="login-form">
-                <input type="text" id="name" placeholder="Nome" required>
-                <input type="email" id="email" placeholder="Email" required>
-                <input type="password" id="password" placeholder="Senha" required>
-                <button type="submit">Enviar</button>
-            </form>
-            <div id="code-verification" style="display: none;">
-                <input type="text" id="code" placeholder="Código de verificação">
-                <button onclick="verifyCode()">Verificar</button>
-            </div>
-            <p id="error-message" style="display: none;"></p>
-            <button class="back-button" onclick="showMainMenu()">Voltar</button>
+        <div class="login-options">
+            <button class="btn btn-google" id="googleLogin">Entrar com Google</button>
+            <button class="btn btn-email" id="emailLogin">Entrar com E-mail</button>
         </div>
     </div>
 
-    <div class="account-prompt" id="account-prompt" style="display: none;">
-        <h2>Já está logado!</h2>
-        <p>Quer logar em outra conta ou continuar com <span id="current-user">Amigo</span>?</p>
-        <div class="buttons">
-            <button onclick="switchAccount()">Sim, outra conta</button>
-            <button onclick="continueAccount()">Não, continuar</button>
+    <!-- Modal para Login com E-mail -->
+    <div class="modal" id="emailModal">
+        <div class="modal-content">
+            <span class="btn-close" id="closeEmailModal">&times;</span>
+            <h2>Entrar com E-mail</h2>
+            <input type="text" id="name" placeholder="Nome" required>
+            <input type="email" id="email" placeholder="E-mail" required>
+            <input type="password" id="password" placeholder="Senha" required>
+            <button class="btn btn-submit" id="submitEmail">Enviar Código</button>
         </div>
     </div>
 
+    <!-- Modal para Verificação de Código -->
+    <div class="modal" id="codeModal">
+        <div class="modal-content">
+            <span class="btn-close" id="closeCodeModal">&times;</span>
+            <h2>Verificar Código</h2>
+            <input type="text" id="code" placeholder="Digite o código" required>
+            <button class="btn btn-submit" id="verifyCode">Verificar</button>
+            <div id="timer"></div>
+            <div id="errorMessage" class="error"></div>
+        </div>
+    </div>
+
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
     <script>
+        // Inicializar EmailJS
         emailjs.init("Ua1Fx3PQbravSSQ21");
 
-        function simpleHash(str) {
-            let hash = 0;
-            for (let i = 0; i < str.length; i++) {
-                const char = str.charCodeAt(i);
-                hash = ((hash << 5) - hash) + char;
-                hash = hash & hash;
-            }
-            return Math.abs(hash).toString(16);
+        // Configuração do Google Sign-In
+        window.onload = function () {
+            google.accounts.id.initialize({
+                client_id: "89714192278-t2vd6qtojn4jief0psghut7un5jmtjjf.apps.googleusercontent.com",
+                callback: handleGoogleSignIn
+            });
+            google.accounts.id.renderButton(
+                document.getElementById("googleLogin"),
+                { theme: "outline", size: "large" }
+            );
+        };
+
+        function handleGoogleSignIn(response) {
+            // Aqui você pode processar o token JWT do Google
+            // Para simplificação, redirecionamos diretamente
+            window.location.href = "feed.html";
         }
 
-        function generateCode() {
-            return Math.floor(100000 + Math.random() * 900000).toString();
-        }
+        // Abrir/Fechar Modais
+        const emailModal = document.getElementById("emailModal");
+        const codeModal = document.getElementById("codeModal");
+        const emailLoginBtn = document.getElementById("emailLogin");
+        const closeEmailModal = document.getElementById("closeEmailModal");
+        const closeCodeModal = document.getElementById("closeCodeModal");
 
-        function handleCredentialResponse(response) {
-            const data = jwt_decode(response.credential);
-            const user = {
-                name: data.name,
-                email: data.email,
-                picture: data.picture,
-                type: 'google'
-            };
-            localStorage.setItem('user', JSON.stringify(user));
-            window.location.href = 'index.html';
-        }
+        emailLoginBtn.onclick = () => {
+            emailModal.style.display = "flex";
+        };
 
-        let storedCode = '';
-        let codeTimestamp = 0;
-        document.getElementById('login-form').addEventListener('submit', function (e) {
-            e.preventDefault();
-            const name = document.getElementById('name').value;
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const errorMessage = document.getElementById('error-message');
+        closeEmailModal.onclick = () => {
+            emailModal.style.display = "none";
+        };
+
+        closeCodeModal.onclick = () => {
+            codeModal.style.display = "none";
+        };
+
+        // Enviar Código de Verificação
+        const submitEmail = document.getElementById("submitEmail");
+        submitEmail.onclick = () => {
+            const name = document.getElementById("name").value;
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
 
             if (!name || !email || !password) {
-                errorMessage.textContent = 'Preencha todos os campos!';
-                errorMessage.style.display = 'block';
+                alert("Por favor, preencha todos os campos.");
                 return;
             }
 
-            storedCode = generateCode();
-            codeTimestamp = Date.now();
-            localStorage.setItem('codeData', JSON.stringify({ code: storedCode, timestamp: codeTimestamp }));
+            // Gerar código de 6 dígitos
+            const code = Math.floor(100000 + Math.random() * 900000).toString();
+            const timestamp = Date.now();
 
-            const templateParams = {
-                subject: 'Verificação LinkBit',
-                from_name: 'LinkBit',
-                message: storedCode,
-                to_email: email
-            };
+            // Armazenar código e timestamp
+            localStorage.setItem("verificationCode", code);
+            localStorage.setItem("codeTimestamp", timestamp);
 
-            emailjs.send('service_yqadn6g', 'template_h19nxad', templateParams)
-                .then(() => {
-                    document.getElementById('login-form').style.display = 'none';
-                    document.getElementById('code-verification').style.display = 'flex';
-                    errorMessage.style.display = 'none';
-                })
-                .catch((err) => {
-                    errorMessage.textContent = `Erro ao enviar email: ${err.text || 'Tente novamente!'}`;
-                    errorMessage.style.display = 'block';
-                });
-        });
-
-        function verifyCode() {
-            const inputCode = document.getElementById('code').value;
-            const errorMessage = document.getElementById('error-message');
-            const codeData = JSON.parse(localStorage.getItem('codeData') || '{}');
-
-            if (!codeData.timestamp || Date.now() - codeData.timestamp > 600000) {
-                errorMessage.textContent = 'Código expirado! Tente novamente.';
-                errorMessage.style.display = 'block';
-                document.getElementById('login-form').style.display = 'block';
-                document.getElementById('code-verification').style.display = 'none';
-                localStorage.removeItem('codeData');
-                return;
-            }
-
-            if (inputCode === codeData.code) {
-                const user = {
-                    name: document.getElementById('name').value,
-                    email: document.getElementById('email').value,
-                    password: simpleHash(document.getElementById('password').value),
-                    type: 'form'
-                };
-                localStorage.setItem('user', JSON.stringify(user));
-                localStorage.removeItem('codeData');
-                window.location.href = 'index.html';
-            } else {
-                errorMessage.textContent = 'Código inválido!';
-                errorMessage.style.display = 'block';
-            }
-        }
-
-        function guestLogin() {
-            const user = {
-                name: `Convidado_${Math.floor(Math.random() * 10000)}`,
-                email: null,
-                type: 'guest'
-            };
-            localStorage.setItem('user', JSON.stringify(user));
-            window.location.href = 'index.html';
-        }
-
-        function jwt_decode(token) {
-            const base64Url = token.split('.')[1];
-            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-            }).join(''));
-            return JSON.parse(jsonPayload);
-        }
-
-        function checkLoginStatus() {
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            const loginContainer = document.getElementById('login-container');
-            const accountPrompt = document.getElementById('account-prompt');
-            const currentUser = document.getElementById('current-user');
-
-            if (user && user.name) {
-                loginContainer.style.display = 'none';
-                accountPrompt.style.display = 'block';
-                currentUser.textContent = user.name;
-            } else {
-                loginContainer.style.display = 'block';
-                accountPrompt.style.display = 'none';
-            }
-        }
-
-        function switchAccount() {
-            localStorage.removeItem('user');
-            localStorage.removeItem('display');
-            localStorage.removeItem('codeData');
-            window.location.reload();
-        }
-
-        function continueAccount() {
-            window.location.href = 'index.html';
-        }
-
-        function showPanel(panelId) {
-            document.getElementById('login-buttons').style.display = 'none';
-            document.getElementById(panelId).classList.add('active');
-        }
-
-        function showMainMenu() {
-            document.getElementById('login-buttons').style.display = 'flex';
-            document.querySelectorAll('.login-panel').forEach(panel => {
-                panel.classList.remove('active');
+            // Enviar e-mail com EmailJS
+            emailjs.send("service_yqadn6g", "template_h19nxad", {
+                subject: "Código de Verificação LinkTbit",
+                to_email: email,
+                from_name: "LinkTbit",
+                message: code
+            }).then(() => {
+                emailModal.style.display = "none";
+                codeModal.style.display = "flex";
+                startTimer();
+            }).catch((error) => {
+                alert("Erro ao enviar o e-mail: " + error);
             });
+        };
+
+        // Timer de 10 minutos
+        let timerInterval;
+        function startTimer() {
+            const timestamp = parseInt(localStorage.getItem("codeTimestamp"));
+            const expiryTime = timestamp + 10 * 60 * 1000; // 10 minutos em milissegundos
+            const timerDisplay = document.getElementById("timer");
+
+            timerInterval = setInterval(() => {
+                const now = Date.now();
+                const timeLeft = expiryTime - now;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    timerDisplay.textContent = "Código expirado!";
+                    localStorage.removeItem("verificationCode");
+                    localStorage.removeItem("codeTimestamp");
+                    return;
+                }
+
+                const minutes = Math.floor(timeLeft / 1000 / 60);
+                const seconds = Math.floor((timeLeft / 1000) % 60);
+                timerDisplay.textContent = `Tempo restante: ${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+            }, 1000);
         }
 
-        document.addEventListener('DOMContentLoaded', checkLoginStatus);
+        // Verificar Código
+        const verifyCodeBtn = document.getElementById("verifyCode");
+        const errorMessage = document.getElementById("errorMessage");
+        verifyCodeBtn.onclick = () => {
+            const inputCode = document.getElementById("code").value;
+            const storedCode = localStorage.getItem("verificationCode");
+            const timestamp = parseInt(localStorage.getItem("codeTimestamp"));
+            const now = Date.now();
+
+            errorMessage.style.display = "none";
+
+            if (!storedCode || !timestamp) {
+                errorMessage.textContent = "Nenhum código encontrado ou expirado.";
+                errorMessage.style.display = "block";
+                return;
+            }
+
+            if (now > timestamp + 10 * 60 * 1000) {
+                errorMessage.textContent = "Código expirado. Solicite um novo.";
+                errorMessage.style.display = "block";
+                localStorage.removeItem("verificationCode");
+                localStorage.removeItem("codeTimestamp");
+                clearInterval(timerInterval);
+                return;
+            }
+
+            if (inputCode === storedCode) {
+                clearInterval(timerInterval);
+                localStorage.removeItem("verificationCode");
+                localStorage.removeItem("codeTimestamp");
+                window.location.href = "feed.html";
+            } else {
+                errorMessage.textContent = "Código inválido. Tente novamente.";
+                errorMessage.style.display = "block";
+            }
+        };
     </script>
 </body>
 </html>
