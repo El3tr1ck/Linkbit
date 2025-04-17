@@ -51,84 +51,75 @@
 
         .post {
             background: white;
-            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
             padding: 15px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-
-        .post-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 5px;
-        }
-
-        .post-text {
-            font-size: 14px;
-            color: #555;
-            margin-bottom: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
         }
 
         .post-author {
-            font-size: 12px;
-            margin-top: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
         }
 
         .post-author a {
             color: #6e8efb;
             text-decoration: none;
-            font-weight: 600;
         }
 
         .post-author a:hover {
             text-decoration: underline;
         }
 
-        .post-media img {
+        .post-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .post-text {
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+
+        .post-media img,
+        .post-media video {
             max-width: 100%;
             border-radius: 8px;
-            margin-top: 10px;
+            margin-bottom: 12px;
         }
 
         .post-media iframe {
             max-width: 100%;
             border-radius: 8px;
-            margin-top: 10px;
-        }
-
-        .post-media video {
-            max-width: 100%;
-            border-radius: 8px;
-            margin-top: 10px;
+            margin-bottom: 12px;
         }
 
         .post-actions {
-            margin-top: 10px;
             display: flex;
-            gap: 10px;
-        }
-
-        .post-actions button {
-            padding: 5px 10px;
-            background: #ff4d4d;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-
-        .post-actions button:hover {
-            background: #e60000;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 8px;
         }
 
         .like-btn {
             background: none;
+            border: none;
             color: #666;
+            font-size: 14px;
+            cursor: pointer;
             display: flex;
             align-items: center;
             gap: 5px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            transition: background 0.2s;
         }
 
         .like-btn.liked {
@@ -136,26 +127,40 @@
         }
 
         .like-btn:hover {
-            color: #ff4d4d;
+            background: #f0f0f0;
         }
 
-        .iframe-container {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            display: none;
-            z-index: 1000;
+        .like-btn i {
+            font-size: 16px;
         }
 
-        .iframe-container iframe {
+        .like-btn span {
+            font-weight: 600;
+        }
+
+        .delete-btn {
+            background: #ff4d4d;
+            color: white;
             border: none;
-            width: 450px;
-            height: 600px;
-            border-radius: 15px;
+            border-radius: 5px;
+            padding: 5px 10px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .delete-btn:hover {
+            background: #e60000;
+        }
+
+        .post-date {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .mention {
+            color: #6e8efb;
+            text-decoration: none;
+            font-weight: 600;
         }
 
         .sidebar {
@@ -363,10 +368,40 @@
             100% { transform: translateY(-50%) rotate(360deg); }
         }
 
-        .mention {
-            color: #6e8efb;
-            text-decoration: none;
-            font-weight: 600;
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            display: none;
+            z-index: 2000;
+            max-width: 300px;
+        }
+
+        .notification.success {
+            border-left: 4px solid #4CAF50;
+        }
+
+        .notification.error {
+            border-left: 4px solid #ff4d4d;
+        }
+
+        .notification p {
+            font-size: 14px;
+            color: #333;
+        }
+
+        .notification.show {
+            display: block;
+            animation: slideIn 0.5s ease forwards;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
 
         @media (max-width: 800px) {
@@ -410,7 +445,6 @@
                 margin-right: 70px;
             }
 
-            .iframe-container iframe,
             .modal-content {
                 width: 100%;
                 max-width: 350px;
@@ -477,9 +511,6 @@
             </button>
         </div>
     </div>
-    <div class="iframe-container" id="iframe-container">
-        <iframe src="/credenciais"></iframe>
-    </div>
 
     <div id="postModal" class="modal">
         <div class="modal-content">
@@ -499,6 +530,10 @@
             </div>
             <button class="submit-btn" id="submitPostBtn">Enviar</button>
         </div>
+    </div>
+
+    <div id="notification" class="notification">
+        <p id="notification-message"></p>
     </div>
 
     <script type="module">
@@ -522,6 +557,16 @@
         const db = getFirestore(app);
         const storage = getStorage(app);
         const auth = getAuth(app);
+
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            const messageElement = document.getElementById('notification-message');
+            messageElement.textContent = message;
+            notification.className = `notification ${type} show`;
+            setTimeout(() => {
+                notification.className = 'notification';
+            }, 3000);
+        }
 
         async function saveUserProfile(user) {
             console.log('saveUserProfile: Iniciando para user:', user?.uid);
@@ -708,11 +753,11 @@
                     console.log('loadPosts: Post:', post);
 
                     const escapeHTML = str => str.replace(/[&<>"']/g, m => ({
-                        '&': '&',
-                        '<': '<',
-                        '>': '>',
-                        '"': '"',
-                        "'": "'"
+                        '&': '&amp;',
+                        '<': '&lt;',
+                        '>': '&gt;',
+                        '"': '&quot;',
+                        "'": '&#039;'
                     })[m]);
 
                     const textWithMentions = escapeHTML(post.text).replace(
@@ -735,7 +780,7 @@
 
                     let deleteButton = '';
                     if (post.authorId === currentUid) {
-                        deleteButton = `<button class="delete-post-btn" data-post-id="${doc.id}">Deletar</button>`;
+                        deleteButton = `<button class="delete-btn delete-post-btn" data-post-id="${doc.id}">Deletar</button>`;
                     }
 
                     const isLiked = post.likes && post.likes.includes(currentUid);
@@ -743,18 +788,20 @@
 
                     const postHTML = `
                         <div class="post">
+                            <div class="post-author">
+                                <a href="/perfil_publico?author=${encodeURIComponent(post.author)}">${escapeHTML(post.author)}</a>
+                            </div>
                             ${post.title ? `<div class="post-title">${escapeHTML(post.title)}</div>` : ''}
                             <div class="post-text">${textWithMentions}</div>
                             ${mediaHTML}
-                            <div class="post-author">
-                                Por <a href="/perfil_publico?author=${encodeURIComponent(post.author)}">${escapeHTML(post.author)}</a>
-                                em ${post.createdAt.toDate().toLocaleString()}
-                            </div>
                             <div class="post-actions">
                                 <button class="like-btn ${isLiked ? 'liked' : ''}" data-post-id="${doc.id}">
-                                    <i class="fas fa-heart"></i> ${likeCount}
+                                    <i class="fas fa-heart"></i> <span>${likeCount}</span>
                                 </button>
                                 ${deleteButton}
+                            </div>
+                            <div class="post-date">
+                                ${post.createdAt.toDate().toLocaleString('pt-BR', { dateStyle: 'medium', timeStyle: 'short' })}
                             </div>
                         </div>
                     `;
@@ -777,26 +824,29 @@
             } catch (error) {
                 console.error('loadPosts: Erro:', error);
                 feed.innerHTML = `<p class="feed-placeholder">Erro ao carregar posts: ${error.message}. Tente novamente.</p>`;
+                showNotification(`Erro ao carregar posts: ${error.message}`, 'error');
             }
         }
 
         async function deletePost(postId) {
             console.log('deletePost: Iniciando:', postId);
-            if (!confirm('Tem certeza que deseja deletar este post?')) {
-                return;
-            }
             try {
                 await deleteDoc(doc(db, 'posts', postId));
                 console.log('deletePost: Post deletado:', postId);
                 await loadPosts();
+                showNotification('Post deletado com sucesso!', 'success');
             } catch (error) {
                 console.error('deletePost: Erro:', error);
-                alert('Erro ao deletar post: ' + error.message);
+                showNotification(`Erro ao deletar post: ${error.message}`, 'error');
             }
         }
 
         async function toggleLike(postId, userId, button) {
             console.log('toggleLike: Iniciando:', postId, userId);
+            if (!userId) {
+                showNotification('Faça login para curtir posts!', 'error');
+                return;
+            }
             try {
                 const postRef = doc(db, 'posts', postId);
                 const postSnap = await getDoc(postRef);
@@ -809,16 +859,16 @@
                 if (likes.includes(userId)) {
                     await setDoc(postRef, { likes: arrayRemove(userId) }, { merge: true });
                     button.classList.remove('liked');
-                    button.innerHTML = `<i class="fas fa-heart"></i> ${likes.length - 1}`;
+                    button.querySelector('span').textContent = likes.length - 1;
                 } else {
                     await setDoc(postRef, { likes: arrayUnion(userId) }, { merge: true });
                     button.classList.add('liked');
-                    button.innerHTML = `<i class="fas fa-heart"></i> ${likes.length + 1}`;
+                    button.querySelector('span').textContent = likes.length + 1;
                 }
                 console.log('toggleLike: Sucesso');
             } catch (error) {
                 console.error('toggleLike: Erro:', error);
-                alert('Erro ao curtir post: ' + error.message);
+                showNotification(`Erro ao curtir post: ${error.message}`, 'error');
             }
         }
 
@@ -840,339 +890,5 @@
                 const post = {
                     title: title ? String(title).substring(0, 100) : '',
                     text: String(text).substring(0, 280),
-                    media: media || {},
+                    media: media || { type: '', url: '', embed: '' },
                     author: author,
-                    createdAt: Timestamp.now(),
-                    likes: [],
-                    authorId: user.uid
-                };
-                console.log('createPost: Post a salvar:', post);
-
-                const docRef = await addDoc(collection(db, 'posts'), post);
-                console.log('createPost: Post criado:', docRef.id);
-                return docRef.id;
-            } catch (error) {
-                console.error('createPost: Erro:', error);
-                throw error;
-            }
-        }
-
-        async function uploadMedia(file) {
-            console.log('uploadMedia: Iniciando:', file.name);
-            try {
-                const user = auth.currentUser;
-                if (!user) {
-                    throw new Error('Usuário não autenticado');
-                }
-
-                if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
-                    throw new Error('Apenas imagens e vídeos são permitidos');
-                }
-                const maxSize = 5 * 1024 * 1024;
-                if (file.size > maxSize) {
-                    throw new Error('Arquivo deve ter no máximo 5 MB');
-                }
-
-                const storageRef = ref(storage, `media/${Date.now()}_${file.name}`);
-                const uploadTask = uploadBytesResumable(storageRef, file);
-
-                return await new Promise((resolve, reject) => {
-                    uploadTask.on(
-                        'state_changed',
-                        snapshot => {
-                            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                            console.log('uploadMedia: Progresso:', progress, '%');
-                        },
-                        error => {
-                            console.error('uploadMedia: Erro:', error);
-                            reject(new Error(`Falha no upload: ${error.message}`));
-                        },
-                        async () => {
-                            try {
-                                const url = await getDownloadURL(uploadTask.snapshot.ref);
-                                const type = file.type.startsWith('video') ? 'video' : file.type === 'image/gif' ? 'gif' : 'image';
-                                console.log('uploadMedia: Sucesso:', url);
-                                resolve({ type, url, embed: '' });
-                            } catch (error) {
-                                console.error('uploadMedia: Erro ao obter URL:', error);
-                                reject(new Error('Erro ao obter URL'));
-                            }
-                        }
-                    );
-                });
-            } catch (error) {
-                console.error('uploadMedia: Erro:', error);
-                throw error;
-            }
-        }
-
-        function processVideoUrl(url) {
-            console.log('processVideoUrl: Iniciando:', url);
-            try {
-                const trimmedUrl = url.trim();
-                if (!trimmedUrl) return null;
-
-                if (trimmedUrl.includes('youtube.com') || trimmedUrl.includes('youtu.be')) {
-                    const videoId = trimmedUrl.match(/(?:v=|\/)([0-9A-Za-z_-]{11})/)?.[1] ||
-                                    trimmedUrl.match(/youtu\.be\/([0-9A-Za-z_-]{11})/)?.[1];
-                    if (videoId) {
-                        console.log('processVideoUrl: YouTube ID:', videoId);
-                        return {
-                            type: 'video',
-                            url: trimmedUrl,
-                            embed: `<iframe width="100%" height="315" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen></iframe>`
-                        };
-                    }
-                } else if (trimmedUrl.includes('tiktok.com')) {
-                    const videoId = trimmedUrl.match(/\/video\/(\d+)/)?.[1];
-                    if (videoId) {
-                        console.log('processVideoUrl: TikTok ID:', videoId);
-                        return {
-                            type: 'video',
-                            url: trimmedUrl,
-                            embed: `<iframe width="100%" height="700" src="https://www.tiktok.com/embed/v2/${videoId}" frameborder="0" allowfullscreen></iframe>`
-                        };
-                    }
-                } else if (trimmedUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
-                    console.log('processVideoUrl: Imagem');
-                    return { type: 'image', url: trimmedUrl, embed: '' };
-                }
-                console.log('processVideoUrl: URL não suportada');
-                return null;
-            } catch (error) {
-                console.error('processVideoUrl: Erro:', error);
-                return null;
-            }
-        }
-
-        function openPostModal() {
-            console.log('openPostModal: Abrindo');
-            const modal = document.getElementById('postModal');
-            if (modal) {
-                modal.style.display = 'flex';
-                document.getElementById('postTitle').value = '';
-                document.getElementById('postText').value = '';
-                document.getElementById('textPreview').innerHTML = '';
-                document.getElementById('mediaOptions').style.display = 'none';
-                document.getElementById('mediaUpload').value = '';
-                document.getElementById('mediaUrl').value = '';
-            } else {
-                console.error('openPostModal: Modal não encontrado');
-            }
-        }
-
-        function closePostModal() {
-            console.log('closePostModal: Fechando');
-            const modal = document.getElementById('postModal');
-            if (modal) {
-                modal.style.display = 'none';
-                const submitBtn = document.getElementById('submitPostBtn');
-                submitBtn.disabled = false;
-                submitBtn.classList.remove('loading');
-                submitBtn.textContent = 'Enviar';
-            }
-        }
-
-        function setupModalEvents() {
-            console.log('setupModalEvents: Configurando');
-            const imageBtn = document.getElementById('imageBtn');
-            const videoBtn = document.getElementById('videoBtn');
-            const uploadBtn = document.getElementById('uploadBtn');
-            const urlBtn = document.getElementById('urlBtn');
-            const uploadInput = document.getElementById('mediaUpload');
-            const urlInput = document.getElementById('mediaUrl');
-            const submitBtn = document.getElementById('submitPostBtn');
-            const mediaOptions = document.getElementById('mediaOptions');
-
-            imageBtn.addEventListener('click', () => {
-                console.log('setupModalEvents: Botão Imagem');
-                mediaOptions.style.display = mediaOptions.style.display === 'block' ? 'none' : 'block';
-                mediaOptions.dataset.type = 'image';
-                uploadInput.accept = 'image/*,image/gif';
-            });
-
-            videoBtn.addEventListener('click', () => {
-                console.log('setupModalEvents: Botão Vídeo');
-                mediaOptions.style.display = mediaOptions.style.display === 'block' ? 'none' : 'block';
-                mediaOptions.dataset.type = 'video';
-                uploadInput.accept = 'video/*';
-            });
-
-            uploadBtn.addEventListener('click', () => {
-                console.log('setupModalEvents: Botão Upload');
-                uploadInput.style.display = 'block';
-                urlInput.style.display = 'none';
-                uploadInput.click();
-            });
-
-            urlBtn.addEventListener('click', () => {
-                console.log('setupModalEvents: Botão URL');
-                urlInput.style.display = 'block';
-                uploadInput.style.display = 'none';
-                urlInput.focus();
-            });
-
-            let isSubmitting = false;
-            submitBtn.addEventListener('click', async () => {
-                if (isSubmitting) return;
-                isSubmitting = true;
-                submitBtn.disabled = true;
-                submitBtn.classList.add('loading');
-                submitBtn.textContent = 'Enviando...';
-                console.log('setupModalEvents: Enviar clicado');
-
-                const title = document.getElementById('postTitle').value;
-                const text = document.getElementById('postText').value;
-                const uploadInput = document.getElementById('mediaUpload');
-                const urlInput = document.getElementById('mediaUrl');
-
-                if (!text.trim()) {
-                    console.log('setupModalEvents: Texto vazio');
-                    alert('Escreva algo no post!');
-                    isSubmitting = false;
-                    submitBtn.disabled = false;
-                    submitBtn.classList.remove('loading');
-                    submitBtn.textContent = 'Enviar';
-                    return;
-                }
-
-                let media = null;
-                if (uploadInput.files[0]) {
-                    console.log('setupModalEvents: Upload:', uploadInput.files[0].name);
-                    try {
-                        media = await uploadMedia(uploadInput.files[0]);
-                        console.log('setupModalEvents: Upload OK:', media);
-                    } catch (error) {
-                        console.error('setupModalEvents: Erro no upload:', error);
-                        alert(error.message);
-                        isSubmitting = false;
-                        submitBtn.disabled = false;
-                        submitBtn.classList.remove('loading');
-                        submitBtn.textContent = 'Enviar';
-                        return;
-                    }
-                } else if (urlInput.value.trim()) {
-                    console.log('setupModalEvents: URL:', urlInput.value);
-                    media = processVideoUrl(urlInput.value);
-                    if (!media) {
-                        console.log('setupModalEvents: URL inválida');
-                        alert('URL inválida ou não suportada');
-                        isSubmitting = false;
-                        submitBtn.disabled = false;
-                        submitBtn.classList.remove('loading');
-                        submitBtn.textContent = 'Enviar';
-                        return;
-                    }
-                }
-
-                try {
-                    await createPost(title, text, media);
-                    console.log('setupModalEvents: Post criado');
-                    closePostModal();
-                    alert('Post criado com sucesso!');
-                    await loadPosts();
-                } catch (error) {
-                    console.error('setupModalEvents: Erro ao criar post:', error);
-                    alert('Erro ao criar post: ' + error.message);
-                } finally {
-                    isSubmitting = false;
-                    submitBtn.disabled = false;
-                    submitBtn.classList.remove('loading');
-                    submitBtn.textContent = 'Enviar';
-                }
-            });
-
-            document.getElementById('postText').addEventListener('input', function () {
-                console.log('setupModalEvents: Input texto');
-                const text = this.value;
-                const preview = document.getElementById('textPreview');
-                const words = text.split(/(\s+)/);
-                preview.innerHTML = words
-                    .map(word => word.startsWith('@') && word.length > 1 ? `<span class="mention">${word}</span>` : word)
-                    .join('');
-            });
-
-            document.getElementById('postModal').addEventListener('click', function (e) {
-                if (e.target === this) closePostModal();
-            });
-        }
-
-        function getAvatarColor(name) {
-            console.log('getAvatarColor: Nome:', name);
-            const colors = ['#6e8efb', '#a777e3', '#ff6b6b', '#4CAF50', '#FF9800', '#9C27B0'];
-            let hash = 0;
-            for (let i = 0; i < name.length; i++) {
-                hash = name.charCodeAt(i) + ((hash << 5) - hash);
-            }
-            return colors[Math.abs(hash) % colors.length];
-        }
-
-        function logout() {
-            console.log('logout: Iniciando');
-            localStorage.clear();
-            window.location.href = '/login';
-        }
-
-        function goToCredentials() {
-            console.log('goToCredentials: Iniciando');
-            window.location.href = '/credenciais';
-        }
-
-        function goToProfile() {
-            console.log('goToProfile: Iniciando');
-            window.location.href = '/perfil_privado';
-        }
-
-        function checkAuth() {
-            console.log('checkAuth: Iniciando');
-            try {
-                const user = JSON.parse(localStorage.getItem('user') || '{}');
-                console.log('checkAuth: Usuário local:', user);
-                if (!user.uid) {
-                    console.log('checkAuth: Sem usuário, redirecionando');
-                    window.location.href = '/login';
-                    return false;
-                }
-                return true;
-            } catch (error) {
-                console.error('checkAuth: Erro:', error);
-                window.location.href = '/login';
-                return false;
-            }
-        }
-
-        onAuthStateChanged(auth, async (user) => {
-            console.log('onAuthStateChanged: Estado:', user ? user.uid : 'Nenhum');
-            if (!user) {
-                console.log('onAuthStateChanged: Sem usuário, login anônimo');
-                try {
-                    const credential = await signInAnonymously(auth);
-                    user = credential.user;
-                    console.log('onAuthStateChanged: Login anônimo OK:', user.uid);
-                } catch (error) {
-                    console.error('onAuthStateChanged: Erro no login anônimo:', error);
-                    window.location.href = '/login';
-                    return;
-                }
-            }
-
-            try {
-                await saveUserProfile(user);
-                if (checkAuth()) {
-                    console.log('onAuthStateChanged: Autenticação OK, carregando');
-                    await loadUserInfo(user);
-                    await loadPosts();
-                    setupModalEvents();
-                    document.getElementById('createPostBtn').addEventListener('click', openPostModal);
-                    document.getElementById('logoutBtn').addEventListener('click', logout);
-                    document.getElementById('credentialsBtn').addEventListener('click', goToCredentials);
-                    document.getElementById('profileBtn').addEventListener('click', goToProfile);
-                }
-            } catch (error) {
-                console.error('onAuthStateChanged: Erro geral:', error);
-                document.querySelector('.feed').innerHTML = '<p class="feed-placeholder">Erro ao carregar. Tente novamente.</p>';
-            }
-        });
-    </script>
-</body>
-</html>
