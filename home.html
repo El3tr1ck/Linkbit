@@ -12,12 +12,19 @@
       justify-content: center;
       align-items: center;
       height: 100vh;
-      background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA...') no-repeat center center fixed; /* Placeholder para a imagem enviada */
+      background: url('icons/background.png') no-repeat center center fixed;
       background-size: cover;
       font-family: Arial, sans-serif;
     }
     .container {
       text-align: center;
+    }
+    .title {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 36px;
+      color: white;
+      text-shadow: 2px 2px 4px #000;
+      margin-bottom: 40px;
     }
     .button {
       display: block;
@@ -48,9 +55,11 @@
       pointer-events: none;
     }
   </style>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="container">
+    <div class="title">linktbit</div>
     <button class="button"><img src="icons/new save.png" alt="Novo Save"><span>Novo Save</span></button>
     <button class="button"><img src="icons/save.png" alt="Continue"><span>Continue</span></button>
     <button class="button"><img src="icons/coop.png" alt="Coop"><span>Coop</span></button>
